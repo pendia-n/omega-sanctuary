@@ -1,0 +1,8 @@
+/node*
+/ui/node_mo*
+.npm* 
+/src/db.sqlite
+*.db
+*.sqlite
+*.sqlite3
+/dist
