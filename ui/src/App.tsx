@@ -79,6 +79,7 @@ export default function App() {
     const [auditPage, setAuditPage] = useState(1);
     const [auditPagination, setAuditPagination] = useState<any>(null);
     const [adminPasswordUpdate, setAdminPasswordUpdate] = useState({ old: '', new: '', confirm: '' });
+    const [adminActiveTab, setAdminActiveTab] = useState<'Metrics' | 'Security'>('Metrics');
 
     // Notifications
     const [copyFeedback, setCopyFeedback] = useState(false);
@@ -141,6 +142,13 @@ export default function App() {
         }
     }, [auditPage, auditFilters, isAdminMode]);
 
+    const exitAdmin = () => {
+        setIsAdminMode(false);
+        setAdminPassword('');
+        setAuditFilters({ after: '', before: '', type: '' });
+        setAuditPage(1);
+    };
+
     const updateAdminPassword = async () => {
         if (adminPasswordUpdate.new !== adminPasswordUpdate.confirm) return alert("Passwords mismatch");
         const res = await fetch('/api/admin/password', {
@@ -165,6 +173,7 @@ export default function App() {
         setApiKey(null);
         setCredits(null);
         setHistory([]);
+        exitAdmin(); // Security: Ensure admin state is cleared on logout
     };
 
     const ignite = async () => {
@@ -266,151 +275,179 @@ export default function App() {
                 <div className="sidebar">
                     <div className="logo" style={{ marginBottom: 40, fontSize: '0.9rem' }}>KINETIC // OS<br /><span style={{ fontSize: '0.6rem', color: 'var(--accent-orange)' }}>SOVEREIGN OVERSEER</span></div>
                     <nav>
-                        <div className="nav-item active"><Activity size={16} /> SYSTEM METRICS</div>
+                        <div className={`nav-item ${adminActiveTab === 'Metrics' ? 'active' : ''}`} onClick={() => setAdminActiveTab('Metrics')}>
+                            <Activity size={16} /> SYSTEM METRICS
+                        </div>
+                        <div className={`nav-item ${adminActiveTab === 'Security' ? 'active' : ''}`} onClick={() => setAdminActiveTab('Security')}>
+                            <Shield size={16} /> SECURITY PROTOCOL
+                        </div>
                     </nav>
                     <div style={{ marginTop: 'auto' }}>
-                        <button className="btn btn-small" style={{ marginTop: 20, width: '100%', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }} onClick={() => setIsAdminMode(false)}>
+                        <button className="btn btn-small" style={{ marginTop: 20, width: '100%', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }} onClick={exitAdmin}>
                             <LogOut size={14} /> EXIT OVERSEER
                         </button>
                     </div>
                 </div>
 
                 <div className="main-content">
-                    <header>
-                        <div style={{ display: 'flex', gap: 20, width: '100%' }}>
-                            <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
-                                <div className="credits-val" style={{ fontSize: '1.2rem', color: 'var(--accent-green)' }}>{adminStats?.users || 0}</div>
-                                <div className="panel-label" style={{ marginBottom: 0 }}>REG. IDENTITIES</div>
-                            </div>
-                            <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
-                                <div className="credits-val" style={{ fontSize: '1.2rem' }}>{adminStats?.logs || 0}</div>
-                                <div className="panel-label" style={{ marginBottom: 0 }}>PHYSICAL ACTIONS</div>
-                            </div>
-                            <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
-                                <div className="credits-val" style={{ fontSize: '1.2rem', color: 'var(--accent-orange)' }}>{adminStats?.totalRefills || 0}</div>
-                                <div className="panel-label" style={{ marginBottom: 0 }}>TOTAL REFILLS</div>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div className="dashboard-grid">
-                        <div className="panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                            <div className="panel-label">ACTIVE SEATS (USER REGISTRY)</div>
-                            <div style={{ flex: 1, overflowY: 'auto' }}>
-                                <table style={{ width: '100%', fontSize: '0.65rem', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                    <thead style={{ background: '#111', color: '#555' }}>
-                                        <tr>
-                                            <th style={{ padding: 10 }}>IDENTITY ID</th>
-                                            <th style={{ padding: 10 }}>CREDITS</th>
-                                            <th style={{ padding: 10 }}>REFILLS</th>
-                                            <th style={{ padding: 10 }}>CREATED</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {adminUsers.map(u => (
-                                            <tr key={u.id} style={{ borderBottom: '1px solid #111' }}>
-                                                <td style={{ padding: 10, color: 'var(--accent-green)', fontFamily: 'var(--font-mono)' }}>{u.id.substring(0, 18)}...</td>
-                                                <td style={{ padding: 10 }}>{(Number(u.credits) || 0).toFixed(1)}</td>
-                                                <td style={{ padding: 10 }}>{u.refill_count}</td>
-                                                <td style={{ padding: 10, color: '#444' }}>{new Date(u.created_at).toLocaleDateString()}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div className="panel" style={{ display: 'flex', flexDirection: 'column' }}>
-                            <div className="panel-label">SOVEREIGN AUDIT LOG</div>
-
-                            {/* Filter Bar */}
-                            <div className="filter-bar" style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-                                <div style={{ flex: 1, minWidth: '120px' }}>
-                                    <label className="panel-label" style={{ fontSize: '0.6rem' }}>TYPE</label>
-                                    <input
-                                        type="text"
-                                        placeholder="K-MOVE..."
-                                        style={{ fontSize: '0.7rem' }}
-                                        value={auditFilters.type}
-                                        onChange={e => setAuditFilters({ ...auditFilters, type: e.target.value })}
-                                    />
-                                </div>
-                                <div style={{ flex: 1, minWidth: '120px' }}>
-                                    <label className="panel-label" style={{ fontSize: '0.6rem' }}>AFTER</label>
-                                    <input
-                                        type="date"
-                                        style={{ fontSize: '0.7rem' }}
-                                        value={auditFilters.after}
-                                        onChange={e => setAuditFilters({ ...auditFilters, after: e.target.value })}
-                                    />
-                                </div>
-                                <div style={{ flex: 1, minWidth: '120px' }}>
-                                    <label className="panel-label" style={{ fontSize: '0.6rem' }}>BEFORE</label>
-                                    <input
-                                        type="date"
-                                        style={{ fontSize: '0.7rem' }}
-                                        value={auditFilters.before}
-                                        onChange={e => setAuditFilters({ ...auditFilters, before: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div style={{ flex: 1, overflowY: 'auto', textAlign: 'left' }}>
-                                {adminAudit.map(log => (
-                                    <div key={log.id} style={{ marginBottom: 15, padding: 15, background: '#000', border: '1px solid #222', borderLeft: '3px solid var(--accent-orange)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                                            <span style={{ color: 'var(--accent-orange)', fontSize: '0.7rem', fontWeight: 900 }}>{log.agent_id.toUpperCase()}</span>
-                                            <span style={{ color: '#444', fontSize: '0.6rem' }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 10 }}>
-                                            <div style={{ fontSize: '0.6rem', color: '#555', background: '#111', padding: 10 }}>
-                                                <span style={{ color: 'var(--accent-green)' }}>COMMAND: </span>
-                                                <span style={{ color: '#aaa' }}>{log.command_sequence}</span>
-                                            </div>
-                                            <div style={{ fontSize: '0.6rem', color: '#555', background: '#05050a', padding: 10, border: '1px solid #111' }}>
-                                                <span style={{ color: 'var(--accent-green)' }}>RAW TELEMETRY: </span>
-                                                <pre style={{ margin: '10px 0 0 0', color: 'var(--accent-green)', fontSize: '0.55rem', whiteSpace: 'pre-wrap' }}>
-                                                    {JSON.stringify(JSON.parse(log.results || '[]'), null, 2)}
-                                                </pre>
-                                            </div>
-                                        </div>
-                                        <div style={{ fontSize: '0.6rem', color: '#333', fontFamily: 'var(--font-mono)' }}>PROOF: {log.proof}</div>
+                    {adminActiveTab === 'Metrics' ? (
+                        <>
+                            <header style={{ borderBottom: 'none' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 15, width: '100%' }}>
+                                    <div className="panel" style={{ padding: '15px 20px' }}>
+                                        <div className="credits-val" style={{ fontSize: '1.2rem', color: 'var(--accent-green)' }}>{adminStats?.users || 0}</div>
+                                        <div className="panel-label" style={{ marginBottom: 0 }}>REG. IDENTITIES</div>
                                     </div>
-                                ))}
-                            </div>
+                                    <div className="panel" style={{ padding: '15px 20px' }}>
+                                        <div className="credits-val" style={{ fontSize: '1.2rem' }}>{adminStats?.logs || 0}</div>
+                                        <div className="panel-label" style={{ marginBottom: 0 }}>PHYSICAL ACTIONS</div>
+                                    </div>
+                                    <div className="panel" style={{ padding: '15px 20px' }}>
+                                        <div className="credits-val" style={{ fontSize: '1.2rem', color: 'var(--accent-orange)' }}>{adminStats?.totalRefills || 0}</div>
+                                        <div className="panel-label" style={{ marginBottom: 0 }}>TOTAL REFILLS</div>
+                                    </div>
+                                </div>
+                            </header>
 
-                            {/* Pagination Controls */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, paddingTop: 15, borderTop: '1px solid #111' }}>
-                                <button
-                                    className="btn btn-small"
-                                    style={{ visibility: auditPage > 1 ? 'visible' : 'hidden' }}
-                                    onClick={() => setAuditPage(p => Math.max(1, p - 1))}
-                                >
-                                    PREVIOUS
-                                </button>
-                                <span style={{ fontSize: '0.7rem', color: '#555' }}>
-                                    PAGE {auditPage} OF {auditPagination?.totalPages || 1}
-                                </span>
-                                <button
-                                    className="btn btn-small"
-                                    style={{ visibility: auditPage < (auditPagination?.totalPages || 1) ? 'visible' : 'hidden' }}
-                                    onClick={() => setAuditPage(p => p + 1)}
-                                >
-                                    NEXT
+                            <div className="dashboard-grid">
+                                <div className="panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                    <div className="panel-label">ACTIVE SEATS (USER REGISTRY)</div>
+                                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                                        <table style={{ width: '100%', fontSize: '0.65rem', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                            <thead style={{ background: '#111', color: '#555' }}>
+                                                <tr>
+                                                    <th style={{ padding: 10 }}>IDENTITY ID</th>
+                                                    <th style={{ padding: 10 }}>CREDITS</th>
+                                                    <th style={{ padding: 10 }}>REFILLS</th>
+                                                    <th style={{ padding: 10 }}>CREATED</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {adminUsers.map(u => (
+                                                    <tr key={u.id} style={{ borderBottom: '1px solid #111' }}>
+                                                        <td style={{ padding: 10, color: 'var(--accent-green)', fontFamily: 'var(--font-mono)' }}>{u.id.substring(0, 18)}...</td>
+                                                        <td style={{ padding: 10 }}>{(Number(u.credits) || 0).toFixed(1)}</td>
+                                                        <td style={{ padding: 10 }}>{u.refill_count}</td>
+                                                        <td style={{ padding: 10, color: '#444' }}>{new Date(u.created_at).toLocaleDateString()}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div className="panel" style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <div className="panel-label">SOVEREIGN AUDIT LOG</div>
+
+                                    {/* Filter Bar */}
+                                    <div className="filter-bar" style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+                                        <div style={{ flex: 1, minWidth: '120px' }}>
+                                            <label className="panel-label" style={{ fontSize: '0.6rem' }}>TYPE</label>
+                                            <input
+                                                type="text"
+                                                placeholder="K-MOVE..."
+                                                style={{ fontSize: '0.7rem' }}
+                                                value={auditFilters.type}
+                                                onChange={e => setAuditFilters({ ...auditFilters, type: e.target.value })}
+                                            />
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: '120px' }}>
+                                            <label className="panel-label" style={{ fontSize: '0.6rem' }}>AFTER</label>
+                                            <input
+                                                type="date"
+                                                style={{ fontSize: '0.7rem' }}
+                                                value={auditFilters.after}
+                                                onChange={e => setAuditFilters({ ...auditFilters, after: e.target.value })}
+                                            />
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: '120px' }}>
+                                            <label className="panel-label" style={{ fontSize: '0.6rem' }}>BEFORE</label>
+                                            <input
+                                                type="date"
+                                                style={{ fontSize: '0.7rem' }}
+                                                value={auditFilters.before}
+                                                onChange={e => setAuditFilters({ ...auditFilters, before: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div style={{ flex: 1, overflowY: 'auto', textAlign: 'left' }}>
+                                        {adminAudit.map(log => (
+                                            <div key={log.id} style={{ marginBottom: 15, padding: 15, background: '#000', border: '1px solid #222', borderLeft: '3px solid var(--accent-orange)' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                                                    <span style={{ color: 'var(--accent-orange)', fontSize: '0.7rem', fontWeight: 900 }}>{log.agent_id.toUpperCase()}</span>
+                                                    <span style={{ color: '#444', fontSize: '0.6rem' }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 10 }}>
+                                                    <div style={{ fontSize: '0.6rem', color: '#555', background: '#111', padding: 10 }}>
+                                                        <span style={{ color: 'var(--accent-green)' }}>COMMAND: </span>
+                                                        <span style={{ color: '#aaa' }}>{log.command_sequence}</span>
+                                                    </div>
+                                                    <div style={{ fontSize: '0.6rem', color: '#555', background: '#05050a', padding: 10, border: '1px solid #111' }}>
+                                                        <span style={{ color: 'var(--accent-green)' }}>RAW TELEMETRY: </span>
+                                                        <pre style={{ margin: '10px 0 0 0', color: 'var(--accent-green)', fontSize: '0.55rem', whiteSpace: 'pre-wrap' }}>
+                                                            {JSON.stringify(JSON.parse(log.results || '[]'), null, 2)}
+                                                        </pre>
+                                                    </div>
+                                                </div>
+                                                <div style={{ fontSize: '0.6rem', color: '#333', fontFamily: 'var(--font-mono)' }}>PROOF: {log.proof}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Pagination Controls */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, paddingTop: 15, borderTop: '1px solid #111' }}>
+                                        <button
+                                            className="btn btn-small"
+                                            style={{ visibility: auditPage > 1 ? 'visible' : 'hidden' }}
+                                            onClick={() => setAuditPage(p => Math.max(1, p - 1))}
+                                        >
+                                            PREVIOUS
+                                        </button>
+                                        <span style={{ fontSize: '0.7rem', color: '#555' }}>
+                                            PAGE {auditPage} OF {auditPagination?.totalPages || 1}
+                                        </span>
+                                        <button
+                                            className="btn btn-small"
+                                            style={{ visibility: auditPage < (auditPagination?.totalPages || 1) ? 'visible' : 'hidden' }}
+                                            onClick={() => setAuditPage(p => p + 1)}
+                                        >
+                                            NEXT
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="panel" style={{ textAlign: 'left', maxWidth: 800, margin: '40px auto' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 15, marginBottom: 30 }}>
+                                <Shield size={24} style={{ color: 'var(--accent-red)' }} />
+                                <h2 className="logo" style={{ fontSize: '1.5rem' }}>SECURITY PROTOCOL ROTATION</h2>
+                            </div>
+                            <p style={{ color: 'var(--text-dim)', marginBottom: 40, fontSize: '0.9rem' }}>
+                                Update the administrative access key for the Sovereign Overseer. This action will immediate invalidate the current password across all active sanctuary terminals.
+                            </p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                                <div>
+                                    <div className="panel-label">CURRENT ACCESS KEY</div>
+                                    <input type="password" placeholder="Current Password" value={adminPasswordUpdate.old} onChange={e => setAdminPasswordUpdate({ ...adminPasswordUpdate, old: e.target.value })} />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                                    <div>
+                                        <div className="panel-label">NEW ACCESS KEY</div>
+                                        <input type="password" placeholder="New Password" value={adminPasswordUpdate.new} onChange={e => setAdminPasswordUpdate({ ...adminPasswordUpdate, new: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <div className="panel-label">CONFIRM NEW KEY</div>
+                                        <input type="password" placeholder="Confirm New" value={adminPasswordUpdate.confirm} onChange={e => setAdminPasswordUpdate({ ...adminPasswordUpdate, confirm: e.target.value })} />
+                                    </div>
+                                </div>
+                                <button className="btn" style={{ marginTop: 20, borderColor: 'var(--accent-red)', color: 'var(--accent-red)', padding: 15 }} onClick={updateAdminPassword}>
+                                    <RefreshCw size={18} style={{ marginRight: 10 }} /> UPDATE PROTOCOL
                                 </button>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="panel" style={{ marginTop: 20, textAlign: 'left' }}>
-                        <div className="panel-label">SECURITY PROTOCOL ROTATION</div>
-                        <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-                            <input type="password" style={{ flex: 1 }} placeholder="Current Password" value={adminPasswordUpdate.old} onChange={e => setAdminPasswordUpdate({ ...adminPasswordUpdate, old: e.target.value })} />
-                            <input type="password" style={{ flex: 1 }} placeholder="New Password" value={adminPasswordUpdate.new} onChange={e => setAdminPasswordUpdate({ ...adminPasswordUpdate, new: e.target.value })} />
-                            <input type="password" style={{ flex: 1 }} placeholder="Confirm New" value={adminPasswordUpdate.confirm} onChange={e => setAdminPasswordUpdate({ ...adminPasswordUpdate, confirm: e.target.value })} />
-                            <button className="btn btn-small" style={{ borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }} onClick={updateAdminPassword}>UPDATE PROTOCOL</button>
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
         );
@@ -420,55 +457,57 @@ export default function App() {
     if (!apiKey && !igniting) {
         return (
             <div className="auth-gate">
-                <div className="logo" style={{ fontSize: '5rem', marginBottom: 0 }}>KINETIC</div>
+                <div className="logo" style={{ fontSize: 'clamp(3rem, 10vw, 5rem)', marginBottom: 0 }}>KINETIC</div>
                 <div style={{ color: 'var(--accent-green)', letterSpacing: 8, fontSize: '0.8rem', marginBottom: 40 }}>SOVEREIGN OPERATING SYSTEM FOR ATOMS</div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 20, width: '1000px', marginBottom: 40 }}>
-                    <div className="panel" style={{ textAlign: 'center' }}><div className="credits-val" style={{ fontSize: '1.5rem', color: 'var(--accent-green)' }}>8</div><div className="panel-label">K-SPEC PRIMITIVES</div></div>
-                    <div className="panel" style={{ textAlign: 'center' }}><div className="credits-val" style={{ fontSize: '1.5rem', color: 'var(--text)' }}>160</div><div className="panel-label">INITIAL CREDITS</div></div>
-                    <div className="panel" style={{ textAlign: 'center' }}><div className="credits-val" style={{ fontSize: '1.5rem', color: 'var(--accent-green)' }}>1.0</div><div className="panel-label">COST PER COMMAND</div></div>
-                    <div className="panel" style={{ textAlign: 'center' }}><div className="credits-val" style={{ fontSize: '1.5rem', color: 'var(--text)' }}>32</div><div className="panel-label">DAILY REFILL</div></div>
-                </div>
+                <div className="auth-container">
+                    <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', width: '100%', marginBottom: 0 }}>
+                        <div className="panel" style={{ textAlign: 'center' }}><div className="credits-val" style={{ fontSize: '1.5rem', color: 'var(--accent-green)' }}>8</div><div className="panel-label">K-SPEC PRIMITIVES</div></div>
+                        <div className="panel" style={{ textAlign: 'center' }}><div className="credits-val" style={{ fontSize: '1.5rem', color: 'var(--text)' }}>160</div><div className="panel-label">INITIAL CREDITS</div></div>
+                        <div className="panel" style={{ textAlign: 'center' }}><div className="credits-val" style={{ fontSize: '1.5rem', color: 'var(--accent-green)' }}>1.0</div><div className="panel-label">COST PER COMMAND</div></div>
+                        <div className="panel" style={{ textAlign: 'center' }}><div className="credits-val" style={{ fontSize: '1.5rem', color: 'var(--text)' }}>32</div><div className="panel-label">DAILY REFILL</div></div>
+                    </div>
 
-                <div className="panel" style={{ width: 800, padding: 40, background: 'rgba(0,0,0,0.5)', border: '1px solid #333' }}>
-                    <div style={{ display: 'flex', gap: 40 }}>
-                        <div style={{ flex: 1, textAlign: 'left' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-                                <Shield className="accent-green" size={24} />
-                                <h2 className="logo" style={{ fontSize: '1.5rem' }}>GHOST PROTOCOL</h2>
-                                <span style={{ marginLeft: 'auto', fontSize: '0.6rem', color: '#555' }}>ANONYMOUS AUTHENTICATION</span>
-                            </div>
-                            <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 30 }}>
-                                Generate an ephemeral API key to access the Kinetic RaaS platform. No email. No password. Pure cryptographic identity.
-                            </p>
-                            <button className="btn" style={{ width: '100%', borderColor: 'var(--accent-green)', color: 'var(--accent-green)', padding: 20 }} onClick={ignite}>
-                                <Zap size={18} /> GENERATE API KEY
-                            </button>
-                        </div>
-                        <div style={{ width: 300, borderLeft: '1px solid #222', paddingLeft: 40, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                            <div className="panel-label">RESTORE IDENTITY</div>
-                            <input
-                                type="text"
-                                placeholder="sk_..."
-                                style={{ background: '#000', fontSize: '0.8rem' }}
-                                value={loginValue}
-                                onChange={e => setLoginValue(e.target.value)}
-                            />
-                            <button className="btn btn-small" style={{ width: '100%' }} onClick={() => claimIdentity(loginValue)}>
-                                <Shield size={14} /> AUTHORIZE KEY
-                            </button>
-                            <div style={{ borderTop: '1px solid #222', paddingTop: 20, marginTop: 10 }}>
-                                <div className="panel-label">ADMIN OVERSIGHT</div>
-                                <input
-                                    type="password"
-                                    placeholder="Password..."
-                                    style={{ background: '#111', fontSize: '0.8rem', marginTop: 10 }}
-                                    value={adminPassword}
-                                    onChange={e => setAdminPassword(e.target.value)}
-                                />
-                                <button className="btn btn-small" style={{ width: '100%', marginTop: 10, borderColor: 'var(--accent-orange)', color: 'var(--accent-orange)' }} onClick={adminLogin}>
-                                    <Eye size={14} /> OVERSIGHT PROTOCOL
+                    <div className="panel" style={{ width: '100%', padding: 'clamp(20px, 5vw, 40px)', background: 'rgba(0,0,0,0.5)', border: '1px solid #333' }}>
+                        <div className="auth-panels">
+                            <div className="auth-main">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                                    <Shield className="accent-green" size={24} />
+                                    <h2 className="logo" style={{ fontSize: '1.5rem' }}>GHOST PROTOCOL</h2>
+                                    <span style={{ marginLeft: 'auto', fontSize: '0.6rem', color: '#555' }}>ANONYMOUS AUTHENTICATION</span>
+                                </div>
+                                <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 30 }}>
+                                    Generate an ephemeral API key to access the Kinetic RaaS platform. No email. No password. Pure cryptographic identity.
+                                </p>
+                                <button className="btn" style={{ width: '100%', borderColor: 'var(--accent-green)', color: 'var(--accent-green)', padding: 20 }} onClick={ignite}>
+                                    <Zap size={18} /> GENERATE API KEY
                                 </button>
+                            </div>
+                            <div className="auth-side">
+                                <div className="panel-label">RESTORE IDENTITY</div>
+                                <input
+                                    type="text"
+                                    placeholder="sk_..."
+                                    style={{ background: '#000', fontSize: '0.8rem' }}
+                                    value={loginValue}
+                                    onChange={e => setLoginValue(e.target.value)}
+                                />
+                                <button className="btn btn-small" style={{ width: '100%' }} onClick={() => claimIdentity(loginValue)}>
+                                    <Shield size={14} /> AUTHORIZE KEY
+                                </button>
+                                <div style={{ borderTop: '1px solid #222', paddingTop: 20, marginTop: 10 }}>
+                                    <div className="panel-label">ADMIN OVERSIGHT</div>
+                                    <input
+                                        type="password"
+                                        placeholder="Password..."
+                                        style={{ background: '#111', fontSize: '0.8rem', marginTop: 10 }}
+                                        value={adminPassword}
+                                        onChange={e => setAdminPassword(e.target.value)}
+                                    />
+                                    <button className="btn btn-small" style={{ width: '100%', marginTop: 10, borderColor: 'var(--accent-orange)', color: 'var(--accent-orange)' }} onClick={adminLogin}>
+                                        <Eye size={14} /> OVERSIGHT PROTOCOL
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

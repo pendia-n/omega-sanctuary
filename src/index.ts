@@ -80,29 +80,29 @@ if (process.env.RESET_ADMIN_PASSWORD === 'true' || !adminConfig) {
 function applyRefill(keyData: any) {
     if (!keyData.first_login_at) return 0;
 
-    const firstLogin = new Date(keyData.first_login_at).getTime();
-    const lastRefill = new Date(keyData.last_refill).getTime();
+    const firstLoginTime = new Date(keyData.first_login_at).getTime();
+    const lastRefillTime = new Date(keyData.last_refill).getTime();
     const now = Date.now();
 
     const msPerDay = 24 * 60 * 60 * 1000;
 
-    // Time since first login
-    const timeSinceStart = now - firstLogin;
-    if (timeSinceStart < 0) return 0; // Should not happen
+    // Days since birth
+    const totalDaysSinceBirth = Math.floor((now - firstLoginTime) / msPerDay);
 
-    // Number of days that should have had a refill
-    const totalRefillsDue = Math.floor(timeSinceStart / msPerDay);
+    // Days already refilled recorded in DB
+    const daysAlreadyRefilled = Math.floor((lastRefillTime - firstLoginTime) / msPerDay);
 
-    // Number of days already refilled
-    const daysSinceFirstToLastRefill = lastRefill - firstLogin;
-    const refillsAlreadyDone = Math.max(0, Math.floor(daysSinceFirstToLastRefill / msPerDay));
-
-    const pendingRefills = totalRefillsDue - refillsAlreadyDone;
+    const pendingRefills = Math.max(0, totalDaysSinceBirth - daysAlreadyRefilled);
 
     if (pendingRefills > 0) {
         const refillAmount = pendingRefills * 32.0;
-        const newRefillDate = new Date(firstLogin + totalRefillsDue * msPerDay).toISOString();
-        db.prepare('UPDATE api_keys SET credits = credits + ?, last_refill = ?, refill_count = refill_count + ? WHERE id = ?').run(refillAmount, newRefillDate, pendingRefills, keyData.id);
+        // Set last_refill to exactly the end of the last refilled 24h period
+        const newRefillDate = new Date(firstLoginTime + totalDaysSinceBirth * msPerDay).toISOString();
+
+        db.prepare('UPDATE api_keys SET credits = credits + ?, last_refill = ?, refill_count = refill_count + ? WHERE id = ?')
+            .run(refillAmount, newRefillDate, pendingRefills, keyData.id);
+
+        console.log(`[REFILL] Identity ${keyData.id}: Refilled ${refillAmount} credits for ${pendingRefills} days.`);
         return refillAmount;
     }
     return 0;
