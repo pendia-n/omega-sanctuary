@@ -75,6 +75,9 @@ export default function App() {
     const [adminStats, setAdminStats] = useState<any>(null);
     const [adminUsers, setAdminUsers] = useState<any[]>([]);
     const [adminAudit, setAdminAudit] = useState<any[]>([]);
+    const [auditFilters, setAuditFilters] = useState({ after: '', before: '', type: '' });
+    const [auditPage, setAuditPage] = useState(1);
+    const [auditPagination, setAuditPagination] = useState<any>(null);
     const [adminPasswordUpdate, setAdminPasswordUpdate] = useState({ old: '', new: '', confirm: '' });
 
     // Notifications
@@ -108,22 +111,35 @@ export default function App() {
         const data = await res.json();
         if (data.status === 'AUTHORIZED') {
             setIsAdminMode(true);
-            fetchAdminData();
+            setAuditPage(1); // Reset page on login
+            fetchAdminData(1, auditFilters);
         } else {
             alert(data.error);
         }
     };
 
-    const fetchAdminData = async () => {
+    const fetchAdminData = async (page = 1, filters = auditFilters) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            ...filters
+        });
+
         const [s, u, a] = await Promise.all([
             fetch('/api/admin/stats').then(r => r.json()),
             fetch('/api/admin/users').then(r => r.json()),
-            fetch('/api/admin/audit').then(r => r.json())
+            fetch(`/api/admin/audit?${queryParams}`).then(r => r.json())
         ]);
         setAdminStats(s);
         setAdminUsers(u.users);
         setAdminAudit(a.logs);
+        setAuditPagination(a.pagination);
     };
+
+    useEffect(() => {
+        if (isAdminMode) {
+            fetchAdminData(auditPage, auditFilters);
+        }
+    }, [auditPage, auditFilters, isAdminMode]);
 
     const updateAdminPassword = async () => {
         if (adminPasswordUpdate.new !== adminPasswordUpdate.confirm) return alert("Passwords mismatch");
@@ -251,7 +267,6 @@ export default function App() {
                     <div className="logo" style={{ marginBottom: 40, fontSize: '0.9rem' }}>KINETIC // OS<br /><span style={{ fontSize: '0.6rem', color: 'var(--accent-orange)' }}>SOVEREIGN OVERSEER</span></div>
                     <nav>
                         <div className="nav-item active"><Activity size={16} /> SYSTEM METRICS</div>
-                        <div className="nav-item" style={{ opacity: 0.5 }}><Shield size={16} /> HARDWARE AUDIT</div>
                     </nav>
                     <div style={{ marginTop: 'auto' }}>
                         <button className="btn btn-small" style={{ marginTop: 20, width: '100%', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }} onClick={() => setIsAdminMode(false)}>
@@ -307,14 +322,82 @@ export default function App() {
 
                         <div className="panel" style={{ display: 'flex', flexDirection: 'column' }}>
                             <div className="panel-label">SOVEREIGN AUDIT LOG</div>
+
+                            {/* Filter Bar */}
+                            <div className="filter-bar" style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+                                <div style={{ flex: 1, minWidth: '120px' }}>
+                                    <label className="panel-label" style={{ fontSize: '0.6rem' }}>TYPE</label>
+                                    <input
+                                        type="text"
+                                        placeholder="K-MOVE..."
+                                        style={{ fontSize: '0.7rem' }}
+                                        value={auditFilters.type}
+                                        onChange={e => setAuditFilters({ ...auditFilters, type: e.target.value })}
+                                    />
+                                </div>
+                                <div style={{ flex: 1, minWidth: '120px' }}>
+                                    <label className="panel-label" style={{ fontSize: '0.6rem' }}>AFTER</label>
+                                    <input
+                                        type="date"
+                                        style={{ fontSize: '0.7rem' }}
+                                        value={auditFilters.after}
+                                        onChange={e => setAuditFilters({ ...auditFilters, after: e.target.value })}
+                                    />
+                                </div>
+                                <div style={{ flex: 1, minWidth: '120px' }}>
+                                    <label className="panel-label" style={{ fontSize: '0.6rem' }}>BEFORE</label>
+                                    <input
+                                        type="date"
+                                        style={{ fontSize: '0.7rem' }}
+                                        value={auditFilters.before}
+                                        onChange={e => setAuditFilters({ ...auditFilters, before: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
                             <div style={{ flex: 1, overflowY: 'auto', textAlign: 'left' }}>
                                 {adminAudit.map(log => (
-                                    <div key={log.id} style={{ marginBottom: 15, padding: 10, background: '#05050a', borderLeft: '2px solid var(--accent-orange)' }}>
-                                        <div style={{ fontSize: '0.6rem', color: '#555', marginBottom: 5 }}>AGENT: {log.agent_id} // {new Date(log.timestamp).toLocaleTimeString()}</div>
-                                        <div style={{ fontSize: '0.6rem', color: 'white' }}>{log.command_sequence}</div>
-                                        <div style={{ fontSize: '0.6rem', color: 'var(--accent-green)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>PROOF: {log.proof}</div>
+                                    <div key={log.id} style={{ marginBottom: 15, padding: 15, background: '#000', border: '1px solid #222', borderLeft: '3px solid var(--accent-orange)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                                            <span style={{ color: 'var(--accent-orange)', fontSize: '0.7rem', fontWeight: 900 }}>{log.agent_id.toUpperCase()}</span>
+                                            <span style={{ color: '#444', fontSize: '0.6rem' }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 10 }}>
+                                            <div style={{ fontSize: '0.6rem', color: '#555', background: '#111', padding: 10 }}>
+                                                <span style={{ color: 'var(--accent-green)' }}>COMMAND: </span>
+                                                <span style={{ color: '#aaa' }}>{log.command_sequence}</span>
+                                            </div>
+                                            <div style={{ fontSize: '0.6rem', color: '#555', background: '#05050a', padding: 10, border: '1px solid #111' }}>
+                                                <span style={{ color: 'var(--accent-green)' }}>RAW TELEMETRY: </span>
+                                                <pre style={{ margin: '10px 0 0 0', color: 'var(--accent-green)', fontSize: '0.55rem', whiteSpace: 'pre-wrap' }}>
+                                                    {JSON.stringify(JSON.parse(log.results || '[]'), null, 2)}
+                                                </pre>
+                                            </div>
+                                        </div>
+                                        <div style={{ fontSize: '0.6rem', color: '#333', fontFamily: 'var(--font-mono)' }}>PROOF: {log.proof}</div>
                                     </div>
                                 ))}
+                            </div>
+
+                            {/* Pagination Controls */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, paddingTop: 15, borderTop: '1px solid #111' }}>
+                                <button
+                                    className="btn btn-small"
+                                    style={{ visibility: auditPage > 1 ? 'visible' : 'hidden' }}
+                                    onClick={() => setAuditPage(p => Math.max(1, p - 1))}
+                                >
+                                    PREVIOUS
+                                </button>
+                                <span style={{ fontSize: '0.7rem', color: '#555' }}>
+                                    PAGE {auditPage} OF {auditPagination?.totalPages || 1}
+                                </span>
+                                <button
+                                    className="btn btn-small"
+                                    style={{ visibility: auditPage < (auditPagination?.totalPages || 1) ? 'visible' : 'hidden' }}
+                                    onClick={() => setAuditPage(p => p + 1)}
+                                >
+                                    NEXT
+                                </button>
                             </div>
                         </div>
                     </div>

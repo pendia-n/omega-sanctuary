@@ -288,8 +288,61 @@ app.get('/api/admin/users', (c) => {
 });
 
 app.get('/api/admin/audit', (c) => {
-    const logs = db.prepare('SELECT * FROM action_logs ORDER BY timestamp DESC LIMIT 100').all();
-    return c.json({ logs });
+    const page = Number(c.req.query('page')) || 1;
+    const limit = 50;
+    const offset = (page - 1) * limit;
+
+    const type = c.req.query('type');
+    const after = c.req.query('after');
+    const before = c.req.query('before');
+
+    let query = 'SELECT * FROM action_logs WHERE 1=1';
+    const params: any[] = [];
+
+    if (type) {
+        query += ' AND command_sequence LIKE ?';
+        params.push(`%${type}%`);
+    }
+    if (after) {
+        query += ' AND timestamp >= ?';
+        params.push(after);
+    }
+    if (before) {
+        query += ' AND timestamp <= ?';
+        params.push(before);
+    }
+
+    query += ' ORDER BY timestamp DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    const logs = db.prepare(query).all(...params);
+
+    // Also get total count for pagination info
+    let countQuery = 'SELECT COUNT(*) as count FROM action_logs WHERE 1=1';
+    const countParams: any[] = [];
+    if (type) {
+        countQuery += ' AND command_sequence LIKE ?';
+        countParams.push(`%${type}%`);
+    }
+    if (after) {
+        countQuery += ' AND timestamp >= ?';
+        countParams.push(after);
+    }
+    if (before) {
+        countQuery += ' AND timestamp <= ?';
+        countParams.push(before);
+    }
+    const total = (db.prepare(countQuery).get(...countParams) as any).count;
+
+    return c.json({
+        logs,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit)
+        }
+    });
 });
 
 app.post('/api/admin/password', async (c) => {
