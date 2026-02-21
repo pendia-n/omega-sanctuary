@@ -563,18 +563,18 @@ export default function App() {
             <div className="main-content">
                 <header>
                     <div style={{ display: 'flex', gap: 20, width: '100%' }}>
-                        <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
+                        {/* <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
                             <div className="credits-val" style={{ fontSize: '1.2rem', color: 'var(--accent-green)' }}>8</div>
                             <div className="panel-label" style={{ marginBottom: 0 }}>PRIMITIVES</div>
-                        </div>
+                        </div> */}
                         <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
                             <div className="credits-val" style={{ fontSize: '1.2rem' }}>{credits?.toFixed(1) || '0.0'}</div>
                             <div className="panel-label" style={{ marginBottom: 0 }}>CREDITS</div>
                         </div>
-                        <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
+                        {/* <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
                             <div className="credits-val" style={{ fontSize: '1.2rem', color: 'var(--accent-green)' }}>1.0</div>
                             <div className="panel-label" style={{ marginBottom: 0 }}>COST/CMD</div>
-                        </div>
+                        </div> */}
                         <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
                             <div className="credits-val" style={{ fontSize: '1.2rem' }}>32</div>
                             <div className="panel-label" style={{ marginBottom: 0 }}>DAILY REFILL</div>
