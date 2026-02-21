@@ -6,7 +6,42 @@ import { createHash } from 'crypto';
 import db from './db.js';
 
 const app = new Hono();
-app.use('*', cors());
+
+// Rate-limiter store (in-memory per-process)
+const _rateStore = new Map<string, { count: number; reset: number }>();
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 60;
+
+app.use('*', async (c, next) => {
+    // --- CORS ---
+    const origin = c.req.header('Origin');
+    const allowed = process.env.PRODUCTION_UI_URL || 'http://localhost:3000';
+    c.header('Access-Control-Allow-Origin', origin === allowed ? origin : 'http://localhost:3000');
+    c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    c.header('Access-Control-Allow-Headers', 'Content-Type, X-KSpec-API-Key');
+    c.header('Access-Control-Allow-Credentials', 'true');
+    if (c.req.method === 'OPTIONS') return c.text('OK', 200);
+
+    // --- RATE LIMIT ---
+    try {
+        const id = c.req.header('X-KSpec-API-Key') ?? (c.req.header('X-Forwarded-For') || 'anon');
+        const now = Date.now();
+        const slot = _rateStore.get(id);
+        if (!slot || now > slot.reset) {
+            _rateStore.set(id, { count: 1, reset: now + RATE_WINDOW_MS });
+        } else {
+            slot.count++;
+            if (slot.count > RATE_MAX) {
+                return c.json({ error: 'Rate limit reached. Slow down.' }, 429);
+            }
+        }
+    } catch (e) {
+        // Never crash on rate-limit errors
+        console.error('[RATE_LIMIT]', e);
+    }
+
+    await next();
+});
 
 // AGENT PROFILES (For Physics Compiler)
 const AGENT_PROFILES: any = {

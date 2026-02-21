@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Terminal, Shield, Zap, History, Layout, Command, LogOut, ChevronRight, Copy, Check, Play, RefreshCw, Cpu, Box, Eye, Activity, FileText } from 'lucide-react';
+import { Terminal, Shield, Zap, History, Layout, Command, LogOut, ChevronRight, Copy, Check, Play, RefreshCw, Cpu, Box, Eye, Activity, FileText, AlertTriangle } from 'lucide-react';
+import KineticSim from './components/KineticSim';
 
 type KineticLog = {
     id: string;
@@ -80,6 +81,8 @@ export default function App() {
     const [auditPagination, setAuditPagination] = useState<any>(null);
     const [adminPasswordUpdate, setAdminPasswordUpdate] = useState({ old: '', new: '', confirm: '' });
     const [adminActiveTab, setAdminActiveTab] = useState<'Metrics' | 'Security'>('Metrics');
+    const [simActive, setSimActive] = useState(false);
+
 
     // Notifications
     const [copyFeedback, setCopyFeedback] = useState(false);
@@ -209,6 +212,7 @@ export default function App() {
     const runCommand = async (agent: string, customCommands?: any[]) => {
         if (!apiKey) return;
         setExecuting(true);
+        setSimActive(true);
         try {
             let cmds: any[];
             if (customCommands) {
@@ -251,6 +255,7 @@ export default function App() {
             console.error("Execution error:", e);
         } finally {
             setExecuting(false);
+            setTimeout(() => setSimActive(false), 2500);
         }
     };
 
@@ -656,7 +661,9 @@ export default function App() {
                         </div>
 
                         <div className="panel" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.3)' }}>
-                            <div className="panel-label">TELEMETRY STREAM</div>
+                            <div className="panel-label">KINETIC-SIM</div>
+                            <KineticSim active={simActive} agentId={agentId} />
+                            <div className="panel-label" style={{ marginTop: 16 }}>TELEMETRY STREAM</div>
                             <div style={{ flex: 1, overflowY: 'auto', paddingRight: 10 }}>
                                 {history.length === 0 ? (
                                     <div style={{ color: '#444', fontSize: '0.8rem', textAlign: 'center', marginTop: 40 }}>Awaiting physical interaction...</div>
@@ -791,6 +798,16 @@ export default function App() {
                                         js: `fetch('/api/user/credits', { headers: { 'X-KSpec-API-Key': key } })`,
                                         python: `requests.get('http://localhost:4400/api/user/credits', headers={'X-KSpec-API-Key': key})`
                                     }
+                                },
+                                {
+                                    meth: 'GET',
+                                    path: '/api/user/history',
+                                    desc: 'Retrieve your action log (last 50).',
+                                    samples: {
+                                        curl: `curl http://localhost:4400/api/user/history -H "X-KSpec-API-Key: YOUR_KEY"`,
+                                        js: `fetch('/api/user/history', { headers: { 'X-KSpec-API-Key': key } })`,
+                                        python: `requests.get('http://localhost:4400/api/user/history', headers={'X-KSpec-API-Key': key})`
+                                    }
                                 }
                             ].map(api => (
                                 <div key={api.path} className="doc-row" style={{ border: '1px solid #222', background: '#111', borderRadius: 8, overflow: 'hidden' }}>
@@ -849,6 +866,16 @@ export default function App() {
                             <p>
                                 Welcome to the Original Sanctuary. Here, your identity is cryptographic, your actions are physics-aware, and your potential is limited only by the structural integrity of the agents you command.
                             </p>
+
+                            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 20, border: '1px solid #7c3a00', background: 'rgba(255,80,0,0.06)', borderRadius: 4 }}>
+                                <AlertTriangle size={20} style={{ color: 'var(--accent-orange)', flexShrink: 0, marginTop: 2 }} />
+                                <div>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-orange)', letterSpacing: 2, marginBottom: 8 }}>PHYSICAL SAFETY PROTOCOL</div>
+                                    <p style={{ fontSize: '0.8rem', color: '#888', lineHeight: 1.7 }}>
+                                        The K-Spec protocol operates physical actuators in the real world. Improperly validated command sequences may cause hardware damage, structural failure, or physical hazard. Always review Physics Compiler validation output, honour load and precision limits, and ensure the workspace is clear before executing high-torque or high-temperature primitives.
+                                    </p>
+                                </div>
+                            </div>
 
                             <div style={{ marginTop: 40, textAlign: 'center' }}>
                                 <button className="btn" onClick={() => setActiveTab('Showcase')}>ENTER THE FRAY</button>
