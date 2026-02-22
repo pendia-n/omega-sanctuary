@@ -62,13 +62,14 @@ export default function App() {
 
     // Command Console State
     const [cmdType, setCmdType] = useState('K-LIFT');
+    const [activeCmd, setActiveCmd] = useState<any[] | null>(null);
     const [cmdX, setCmdX] = useState('0');
     const [cmdY, setCmdY] = useState('0');
     const [cmdZ, setCmdZ] = useState('0');
     const [executing, setExecuting] = useState(false);
 
     // IDE State
-    const [ideContent, setIdeContent] = useState('[\n  { "type": "K-LIFT", "params": { "weight": 250, "height": 1.2 } }\n]');
+    const [ideContent, setIdeContent] = useState('[\n  { "type": "K-GRIP", "params": { "weight": 20, "height": 1.2 } }\n]');
 
     // Admin State
     const [isAdminMode, setIsAdminMode] = useState(false);
@@ -234,6 +235,8 @@ export default function App() {
                 cmds = [{ type: cmdType, params }];
             }
 
+            setActiveCmd(cmds);
+
             const res = await fetch('/api/execute', {
                 method: 'POST',
                 headers: {
@@ -255,7 +258,10 @@ export default function App() {
             console.error("Execution error:", e);
         } finally {
             setExecuting(false);
-            setTimeout(() => setSimActive(false), 2500);
+            setTimeout(() => {
+                setSimActive(false);
+                setActiveCmd(null);
+            }, 2500);
         }
     };
 
@@ -647,7 +653,13 @@ export default function App() {
                         <div className="panel">
                             <div className="panel-label">SOVEREIGN EXECUTOR</div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                                <div><label className="panel-label">Target Agent</label><select value={agentId} onChange={e => setAgentId(e.target.value)}>{Object.keys(AGENT_CAPABILITIES).map(n => <option key={n}>{n}</option>)}</select></div>
+                                <div><label className="panel-label">Target Agent</label><select value={agentId} onChange={e => {
+                                    const nextAgent = e.target.value;
+                                    setAgentId(nextAgent);
+                                    if (!AGENT_CAPABILITIES[nextAgent].caps.includes(cmdType)) {
+                                        setCmdType(AGENT_CAPABILITIES[nextAgent].caps[0]);
+                                    }
+                                }}>{Object.keys(AGENT_CAPABILITIES).map(n => <option key={n}>{n}</option>)}</select></div>
                                 <div><label className="panel-label">K-Primitive</label><select value={cmdType} onChange={e => setCmdType(e.target.value)}>{AGENT_CAPABILITIES[agentId].caps.map((c: string) => <option key={c}>{c}</option>)}</select></div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                                     <div><label className="panel-label">Intensity</label><input type="number" value={cmdX} onChange={e => setCmdX(e.target.value)} /></div>
@@ -662,7 +674,7 @@ export default function App() {
 
                         <div className="panel" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.3)' }}>
                             <div className="panel-label">KINETIC-SIM</div>
-                            <KineticSim active={simActive} agentId={agentId} />
+                            <KineticSim active={simActive} agentId={agentId} commands={activeCmd} />
                             <div className="panel-label" style={{ marginTop: 16 }}>TELEMETRY STREAM</div>
                             <div style={{ flex: 1, overflowY: 'auto', paddingRight: 10 }}>
                                 {history.length === 0 ? (
