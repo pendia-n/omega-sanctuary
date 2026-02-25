@@ -34,6 +34,14 @@
 - [x] **Phase 2: The Sovereign Refinement (Nietzschean Logic)**
     - [x] **Credit Overhaul**: Initialize with 170 credits, implement 60 daily refill.
     - [x] **UI Balance Display**: Show live credit balance in the header.
+    - [x] Analyze existing refill logic in `src/index.ts` and `src/db.ts`
+    - [x] Fix refill logic to strictly check balance <= 160 and only inc count on refill
+    - [x] Update UI in `ui/src/App.tsx` to show full timestamp
+    - [x] Persist admin session in localStorage
+    - [x] Fix logout-loop when ephemeral key expires in admin mode
+    - [/] Exempt `/api/admin` from rate limiting in `src/index.ts` [/]
+    - [/] Add error boundaries and try/catch to admin fetches in `App.tsx` [/]
+    - [ ] Verify administrator resilience under high load
     - [x] **Expanded Primitives**: Update engine to support K-WAIT condition and K-SENSE metadata.
     - [x] **Action Registry**: Framework for storing reusable K-Spec modules.
 

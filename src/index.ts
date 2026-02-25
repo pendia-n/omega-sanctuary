@@ -22,6 +22,13 @@ app.use('*', async (c, next) => {
     c.header('Access-Control-Allow-Credentials', 'true');
     if (c.req.method === 'OPTIONS') return c.text('OK', 200);
 
+    // --- RATE LIMIT EXEMPTION ---
+    // Oversight endpoints (/api/admin) are exempt from all rate-limiting
+    if (c.req.path.includes('/admin')) {
+        await next();
+        return;
+    }
+
     // --- RATE LIMIT ---
     try {
         const id = c.req.header('X-KSpec-API-Key') ?? (c.req.header('X-Forwarded-For') || 'anon');
@@ -111,39 +118,58 @@ if (process.env.RESET_ADMIN_PASSWORD === 'true' || !adminConfig) {
     db.prepare('INSERT OR REPLACE INTO admin_config (key, value) VALUES (?, ?)').run('admin_password', initialAdminHash);
 }
 
-// Refill Logic: 32 credits daily based on first_login_at
-function applyRefill(keyData: any) {
-    if (!keyData.first_login_at) return 0;
+// Background Refill Task: Processes all identities every 24h based on created_at
+function processAllRefills() {
+    try {
+        const now = Date.now();
+        const msPerDay = 24 * 60 * 60 * 1000;
+        const activeKeys = db.prepare("SELECT * FROM api_keys WHERE status = 'ACTIVE'").all() as any[];
 
-    const firstLoginTime = new Date(keyData.first_login_at).getTime();
-    const lastRefillTime = new Date(keyData.last_refill).getTime();
-    const now = Date.now();
+        for (const key of activeKeys) {
+            const createdAt = new Date(key.created_at + 'Z').getTime();
+            const totalCyclesPassed = Math.floor((now - createdAt) / msPerDay);
+            // We need to track how many cycles we've already CHECKED. 
+            // Since we don't have a 'checked_cycles' column, we can use last_refill 
+            // to infer how many cycles were already processed.
+            const lastRefillDate = new Date(key.last_refill + (key.last_refill.includes('Z') ? '' : 'Z')).getTime();
+            const cyclesAlreadyProcessed = Math.floor((lastRefillDate - createdAt) / msPerDay);
 
-    const msPerDay = 24 * 60 * 60 * 1000;
+            const pendingCycles = totalCyclesPassed - cyclesAlreadyProcessed;
 
-    // Days since birth
-    const totalDaysSinceBirth = Math.floor((now - firstLoginTime) / msPerDay);
+            if (pendingCycles > 0) {
+                let currentCredits = key.credits;
+                let newRefillCount = key.refill_count || 0;
+                let actuallyRefilledAmount = 0;
 
-    // Days already refilled recorded in DB
-    const daysAlreadyRefilled = Math.floor((lastRefillTime - firstLoginTime) / msPerDay);
+                for (let i = 0; i < pendingCycles; i++) {
+                    if (currentCredits <= 160) {
+                        currentCredits += 32;
+                        actuallyRefilledAmount += 32;
+                        newRefillCount++; // Only increment if we actually refilled
+                    }
+                }
 
-    const pendingRefills = Math.max(0, totalDaysSinceBirth - daysAlreadyRefilled);
+                // Update last_refill to reflect that we've processed up to this current 24h window
+                const newLastRefillDate = new Date(createdAt + totalCyclesPassed * msPerDay).toISOString();
+                db.prepare('UPDATE api_keys SET credits = ?, last_refill = ?, refill_count = ? WHERE id = ?')
+                    .run(currentCredits, newLastRefillDate, newRefillCount, key.id);
 
-    if (pendingRefills > 0) {
-        const refillAmount = pendingRefills * 32.0;
-        // Set last_refill to exactly the end of the last refilled 24h period
-        const newRefillDate = new Date(firstLoginTime + totalDaysSinceBirth * msPerDay).toISOString();
-
-        db.prepare('UPDATE api_keys SET credits = credits + ?, last_refill = ?, refill_count = refill_count + ? WHERE id = ?')
-            .run(refillAmount, newRefillDate, pendingRefills, keyData.id);
-
-        console.log(`[REFILL] Identity ${keyData.id}: Refilled ${refillAmount} credits for ${pendingRefills} days.`);
-        return refillAmount;
+                if (actuallyRefilledAmount > 0) {
+                    console.log(`[BACKGROUND-REFILL] Identity ${key.id}: Refilled ${actuallyRefilledAmount} credits. New refill count: ${newRefillCount}`);
+                }
+            }
+        }
+    } catch (e) {
+        console.error('[BACKGROUND-REFILL] Error:', e);
     }
-    return 0;
 }
 
-// Middleware: Ghost Timer & Refill Check
+// Start background interval (every 10 minutes to ensuse precision across reboots)
+setInterval(processAllRefills, 10 * 60 * 1000);
+// Initial run
+setTimeout(processAllRefills, 5000);
+
+// Middleware: Ghost Timer (Refill check removed here, now background-only)
 app.use('*', async (c, next) => {
     const apiKey = c.req.header('X-KSpec-API-Key');
     if (apiKey) {
@@ -151,9 +177,6 @@ app.use('*', async (c, next) => {
         const keyData = db.prepare('SELECT * FROM api_keys WHERE key_hash = ?').get(keyHash) as any;
 
         if (keyData) {
-            // Apply Refill if applicable
-            applyRefill(keyData);
-
             if (keyData.status === 'EPHEMERAL') {
                 const createdAt = new Date(keyData.created_at + 'Z').getTime();
                 const now = Date.now();
@@ -320,6 +343,25 @@ app.get('/api/admin/stats', (c) => {
 app.get('/api/admin/users', (c) => {
     const users = db.prepare('SELECT id, credits, status, created_at, refill_count, first_login_at FROM api_keys ORDER BY created_at DESC').all();
     return c.json({ users });
+});
+
+app.delete('/api/admin/users/:id', (c) => {
+    const id = c.req.param('id');
+    try {
+        const deleteLogs = db.prepare('DELETE FROM action_logs WHERE api_key_id = ?');
+        const deleteKey = db.prepare('DELETE FROM api_keys WHERE id = ?');
+
+        const transaction = db.transaction(() => {
+            deleteLogs.run(id);
+            deleteKey.run(id);
+        });
+
+        transaction();
+        return c.json({ status: "DELETED" });
+    } catch (e) {
+        console.error('[ADMIN DELETE] Error:', e);
+        return c.json({ error: "Internal Protocol Failure" }, 500);
+    }
 });
 
 app.get('/api/admin/audit', (c) => {

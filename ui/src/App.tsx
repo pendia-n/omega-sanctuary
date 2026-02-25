@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Terminal, Shield, Zap, History, Layout, Command, LogOut, ChevronRight, Copy, Check, Play, RefreshCw, Cpu, Box, Eye, Activity, FileText, AlertTriangle } from 'lucide-react';
+import { Terminal, Shield, Zap, History, Layout, Command, LogOut, ChevronRight, Copy, Check, Play, RefreshCw, Cpu, Box, Eye, Activity, FileText, AlertTriangle, Trash2 } from 'lucide-react';
 import KineticSim from './components/KineticSim';
 
 type KineticLog = {
@@ -72,7 +72,7 @@ export default function App() {
     const [ideContent, setIdeContent] = useState('[\n  { "type": "K-GRIP", "params": { "weight": 20, "height": 1.2 } }\n]');
 
     // Admin State
-    const [isAdminMode, setIsAdminMode] = useState(false);
+    const [isAdminMode, setIsAdminMode] = useState(localStorage.getItem('kinetic_admin') === 'true');
     const [adminPassword, setAdminPassword] = useState('');
     const [adminStats, setAdminStats] = useState<any>(null);
     const [adminUsers, setAdminUsers] = useState<any[]>([]);
@@ -104,7 +104,10 @@ export default function App() {
             localStorage.setItem('kinetic_key', key);
         } catch (e) {
             console.error(e);
-            logout();
+            // If we are in admin mode, don't boot the user out, just clear the bad key
+            localStorage.removeItem('kinetic_key');
+            setApiKey(null);
+            if (!isAdminMode) logout();
         }
     };
 
@@ -116,6 +119,7 @@ export default function App() {
         const data = await res.json();
         if (data.status === 'AUTHORIZED') {
             setIsAdminMode(true);
+            localStorage.setItem('kinetic_admin', 'true');
             setAuditPage(1); // Reset page on login
             fetchAdminData(1, auditFilters);
         } else {
@@ -129,15 +133,45 @@ export default function App() {
             ...filters
         });
 
-        const [s, u, a] = await Promise.all([
-            fetch('/api/admin/stats').then(r => r.json()),
-            fetch('/api/admin/users').then(r => r.json()),
-            fetch(`/api/admin/audit?${queryParams}`).then(r => r.json())
-        ]);
-        setAdminStats(s);
-        setAdminUsers(u.users);
-        setAdminAudit(a.logs);
-        setAuditPagination(a.pagination);
+        try {
+            const [sRes, uRes, aRes] = await Promise.all([
+                fetch('/api/admin/stats'),
+                fetch('/api/admin/users'),
+                fetch(`/api/admin/audit?${queryParams}`)
+            ]);
+
+            if (!sRes.ok || !uRes.ok || !aRes.ok) {
+                console.warn("ADMIN_PROTOCOL_SYNC_DELAY", { stats: sRes.status, users: uRes.status, audit: aRes.status });
+                return;
+            }
+
+            const [s, u, a] = await Promise.all([sRes.json(), uRes.json(), aRes.json()]);
+
+            setAdminStats(s);
+            setAdminUsers(u.users || []);
+            setAdminAudit(a.logs || []);
+            setAuditPagination(a.pagination);
+        } catch (err) {
+            console.error("ADMIN_PROTOCOL_FAILURE", err);
+        }
+    };
+
+    const deleteUser = async (id: string) => {
+
+        try {
+            const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                return alert(`PURGE_REFUSED: ${errData.error || res.status}`);
+            }
+            const data = await res.json();
+            if (data.status === 'DELETED') {
+                alert(`IDENTITY_PURGED: ${id}`);
+                fetchAdminData(auditPage, auditFilters);
+            }
+        } catch (e) {
+            console.error("Purge Error:", e);
+        }
     };
 
     useEffect(() => {
@@ -148,6 +182,7 @@ export default function App() {
 
     const exitAdmin = () => {
         setIsAdminMode(false);
+        localStorage.removeItem('kinetic_admin');
         setAdminPassword('');
         setAuditFilters({ after: '', before: '', type: '' });
         setAuditPage(1);
@@ -172,12 +207,12 @@ export default function App() {
         if (apiKey) fetchData(apiKey);
     }, [apiKey]);
 
-    const logout = () => {
+    const logout = (clearAdmin = true) => {
         localStorage.removeItem('kinetic_key');
         setApiKey(null);
         setCredits(null);
         setHistory([]);
-        exitAdmin(); // Security: Ensure admin state is cleared on logout
+        if (clearAdmin) exitAdmin(); // Security: Only clear admin if explicitly requested or if it's a full logout
     };
 
     const ignite = async () => {
@@ -331,6 +366,7 @@ export default function App() {
                                                     <th style={{ padding: 10 }}>CREDITS</th>
                                                     <th style={{ padding: 10 }}>REFILLS</th>
                                                     <th style={{ padding: 10 }}>CREATED</th>
+                                                    <th style={{ padding: 10 }}>ACTIONS</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -339,7 +375,16 @@ export default function App() {
                                                         <td style={{ padding: 10, color: 'var(--accent-green)', fontFamily: 'var(--font-mono)' }}>{u.id.substring(0, 18)}...</td>
                                                         <td style={{ padding: 10 }}>{(Number(u.credits) || 0).toFixed(1)}</td>
                                                         <td style={{ padding: 10 }}>{u.refill_count}</td>
-                                                        <td style={{ padding: 10, color: '#444' }}>{new Date(u.created_at).toLocaleDateString()}</td>
+                                                        <td style={{ padding: 10, color: '#444' }}>{new Date(u.created_at).toLocaleString()}</td>
+                                                        <td style={{ padding: 10 }}>
+                                                            <button
+                                                                className="btn btn-small"
+                                                                style={{ color: 'var(--accent-red)', borderColor: 'var(--accent-red)', padding: '5px 10px' }}
+                                                                onClick={() => deleteUser(u.id)}
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -387,7 +432,7 @@ export default function App() {
                                             <div key={log.id} style={{ marginBottom: 15, padding: 15, background: '#000', border: '1px solid #222', borderLeft: '3px solid var(--accent-orange)' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                                                     <span style={{ color: 'var(--accent-orange)', fontSize: '0.7rem', fontWeight: 900 }}>{log.agent_id.toUpperCase()}</span>
-                                                    <span style={{ color: '#444', fontSize: '0.6rem' }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                                                    <span style={{ color: '#444', fontSize: '0.6rem' }}>{new Date(log.timestamp).toLocaleString()}</span>
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 10 }}>
                                                     <div style={{ fontSize: '0.6rem', color: '#555', background: '#111', padding: 10 }}>
@@ -565,7 +610,7 @@ export default function App() {
                 <div style={{ marginTop: 'auto' }}>
                     <span className="panel-label">VERIFIED IDENTITY</span>
                     <div style={{ fontSize: '0.6rem', color: 'var(--accent-orange)', wordBreak: 'break-all', background: '#000', padding: 10, border: '1px solid #222' }}>{apiKey}</div>
-                    <button className="btn btn-small" style={{ marginTop: 20, width: '100%', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }} onClick={logout}>
+                    <button className="btn btn-small" style={{ marginTop: 20, width: '100%', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }} onClick={() => logout()}>
                         <LogOut size={14} /> TERMINATE LINK
                     </button>
                 </div>
@@ -685,7 +730,7 @@ export default function App() {
                                             <div key={log.id} style={{ padding: 15, background: '#000', border: '1px solid #222', borderRadius: 4 }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                                                     <span style={{ color: 'var(--accent-orange)', fontSize: '0.7rem', fontWeight: 700 }}>{log.agent_id.toUpperCase()}</span>
-                                                    <span style={{ color: '#444', fontSize: '0.6rem' }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                                                    <span style={{ color: '#444', fontSize: '0.6rem' }}>{new Date(log.timestamp).toLocaleString()}</span>
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 10 }}>
                                                     <div style={{ fontSize: '0.6rem', color: '#555', background: '#111', padding: 10, borderRadius: 3 }}>
