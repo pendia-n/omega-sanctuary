@@ -40,7 +40,8 @@ body {
   color: var(--text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   line-height: 1.6;
 }
 
@@ -231,10 +232,11 @@ select:focus {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-md); /* Reduced gap */
   text-align: center;
-  padding: var(--spacing-xl) var(--spacing-md);
+  padding: var(--spacing-md); /* Reduced padding */
   background: radial-gradient(circle at center, #0d1e45 0%, var(--bg) 100%);
+  overflow-y: auto;
 }
 
 .auth-container {
@@ -242,12 +244,12 @@ select:focus {
   max-width: 900px;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
 .auth-panels {
   display: flex;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
   width: 100%;
 }
 
@@ -259,10 +261,10 @@ select:focus {
 .auth-side {
   width: 320px;
   border-left: 1px solid var(--panel-border);
-  padding-left: var(--spacing-lg);
+  padding-left: var(--spacing-md);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-xs);
 }
 
 .timer-toast {

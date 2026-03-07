@@ -513,8 +513,8 @@ export default function App() {
     if (!apiKey && !igniting) {
         return (
             <div className="auth-gate">
-                <div className="logo" style={{ fontSize: 'clamp(3rem, 10vw, 5rem)', marginBottom: 0 }}>OREGA SANCTUARY</div>
-                <div style={{ color: 'var(--accent-green)', letterSpacing: 8, fontSize: '0.8rem', marginBottom: 40 }}>SOVEREIGN OPERATING SYSTEM FOR ATOMS</div>
+                <div className="logo" style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)', marginBottom: 0 }}>OREGA SANCTUARY</div>
+                <div style={{ color: 'var(--accent-green)', letterSpacing: 8, fontSize: '0.8rem', marginBottom: 20 }}>SOVEREIGN OPERATING SYSTEM FOR ATOMS</div>
 
                 <div className="auth-container">
                     <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', width: '100%', marginBottom: 0 }}>
