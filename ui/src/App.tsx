@@ -319,7 +319,7 @@ export default function App() {
         return (
             <div className="terminal-layout">
                 <div className="sidebar">
-                    <div className="logo" style={{ marginBottom: 40, fontSize: '0.9rem' }}>KINETIC // OS<br /><span style={{ fontSize: '0.6rem', color: 'var(--accent-orange)' }}>SOVEREIGN OVERSEER</span></div>
+                    <div className="logo" style={{ marginBottom: 40, fontSize: '0.9rem' }}>OREGA SANCTUARY<br /><span style={{ fontSize: '0.6rem', color: 'var(--accent-yellow)' }}>SOVEREIGN OVERSEER</span></div>
                     <nav>
                         <div className={`nav-item ${adminActiveTab === 'Metrics' ? 'active' : ''}`} onClick={() => setAdminActiveTab('Metrics')}>
                             <Activity size={16} /> SYSTEM METRICS
@@ -349,7 +349,7 @@ export default function App() {
                                         <div className="panel-label" style={{ marginBottom: 0 }}>PHYSICAL ACTIONS</div>
                                     </div>
                                     <div className="panel" style={{ padding: '15px 20px' }}>
-                                        <div className="credits-val" style={{ fontSize: '1.2rem', color: 'var(--accent-orange)' }}>{adminStats?.totalRefills || 0}</div>
+                                        <div className="credits-val" style={{ fontSize: '1.2rem', color: 'var(--accent-yellow)' }}>{adminStats?.totalRefills || 0}</div>
                                         <div className="panel-label" style={{ marginBottom: 0 }}>TOTAL REFILLS</div>
                                     </div>
                                 </div>
@@ -431,7 +431,7 @@ export default function App() {
                                         {adminAudit.map(log => (
                                             <div key={log.id} style={{ marginBottom: 15, padding: 15, background: '#000', border: '1px solid #222', borderLeft: '3px solid var(--accent-orange)' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                                                    <span style={{ color: 'var(--accent-orange)', fontSize: '0.7rem', fontWeight: 900 }}>{log.agent_id.toUpperCase()}</span>
+                                                    <span style={{ color: 'var(--accent-yellow)', fontSize: '0.7rem', fontWeight: 900 }}>{log.agent_id.toUpperCase()}</span>
                                                     <span style={{ color: '#444', fontSize: '0.6rem' }}>{new Date(log.timestamp).toLocaleString()}</span>
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 10 }}>
@@ -513,7 +513,7 @@ export default function App() {
     if (!apiKey && !igniting) {
         return (
             <div className="auth-gate">
-                <div className="logo" style={{ fontSize: 'clamp(3rem, 10vw, 5rem)', marginBottom: 0 }}>KINETIC</div>
+                <div className="logo" style={{ fontSize: 'clamp(3rem, 10vw, 5rem)', marginBottom: 0 }}>OREGA SANCTUARY</div>
                 <div style={{ color: 'var(--accent-green)', letterSpacing: 8, fontSize: '0.8rem', marginBottom: 40 }}>SOVEREIGN OPERATING SYSTEM FOR ATOMS</div>
 
                 <div className="auth-container">
@@ -533,7 +533,7 @@ export default function App() {
                                     <span style={{ marginLeft: 'auto', fontSize: '0.6rem', color: '#555' }}>ANONYMOUS AUTHENTICATION</span>
                                 </div>
                                 <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 30 }}>
-                                    Generate an ephemeral API key to access the Kinetic RaaS platform. No email. No password. Pure cryptographic identity.
+                                    Generate an ephemeral API key to access the Orega Sanctuary platform. No email. No password. Pure cryptographic identity.
                                 </p>
                                 <button className="btn" style={{ width: '100%', borderColor: 'var(--accent-green)', color: 'var(--accent-green)', padding: 20 }} onClick={ignite}>
                                     <Zap size={18} /> GENERATE API KEY
@@ -560,7 +560,7 @@ export default function App() {
                                         value={adminPassword}
                                         onChange={e => setAdminPassword(e.target.value)}
                                     />
-                                    <button className="btn btn-small" style={{ width: '100%', marginTop: 10, borderColor: 'var(--accent-orange)', color: 'var(--accent-orange)' }} onClick={adminLogin}>
+                                    <button className="btn btn-small" style={{ width: '100%', marginTop: 10, borderColor: 'var(--accent-yellow)', color: 'var(--accent-yellow)' }} onClick={adminLogin}>
                                         <Eye size={14} /> OVERSIGHT PROTOCOL
                                     </button>
                                 </div>
@@ -576,9 +576,9 @@ export default function App() {
     if (igniting && tempKey) {
         return (
             <div className="timer-toast">
-                <div className="pulse-bar" style={{ background: 'var(--accent-red)' }}></div>
-                <h2 style={{ color: 'var(--accent-red)', marginBottom: 20, letterSpacing: 2 }}>EPOCH IGNITION IN PROGRESS</h2>
-                <p style={{ color: 'var(--text-dim)', marginBottom: 30 }}>Your identity is being broadcast to the Kinetic Kernel. You have 9 seconds to claim your seat in reality.</p>
+                <div className="pulse-bar" style={{ background: 'var(--accent-yellow)' }}></div>
+                <h2 style={{ color: 'var(--accent-yellow)', marginBottom: 20, letterSpacing: 2 }}>EPOCH IGNITION IN PROGRESS</h2>
+                <p style={{ color: 'var(--text-dim)', marginBottom: 30 }}>Your identity is being broadcast to the Sanctuary Kernel. You have 9 seconds to claim your seat in reality.</p>
                 <div style={{ background: '#000', padding: 25, marginBottom: 30, textAlign: 'left', border: '1px solid #444', position: 'relative' }}>
                     <span className="panel-label" style={{ color: 'var(--accent-red)' }}>Ephemeral Access Key</span>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
@@ -599,7 +599,7 @@ export default function App() {
     return (
         <div className="terminal-layout">
             <div className="sidebar">
-                <div className="logo" style={{ marginBottom: 40, fontSize: '0.9rem' }}>KINETIC // OS<br /><span style={{ fontSize: '0.6rem', opacity: 0.6 }}>ORIGINAL SANCTUARY</span></div>
+                <div className="logo" style={{ marginBottom: 40, fontSize: '0.9rem' }}>OREGA SANCTUARY<br /><span style={{ fontSize: '0.6rem', opacity: 0.6 }}>ORIGINAL SANCTUARY</span></div>
                 <nav>
                     <div className={activeTab === 'Showcase' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveTab('Showcase')}><Cpu size={16} /> AGENT SHOWCASE</div>
                     <div className={activeTab === 'Dashboard' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveTab('Dashboard')}><Command size={16} /> EXECUTOR</div>
@@ -609,7 +609,7 @@ export default function App() {
                 </nav>
                 <div style={{ marginTop: 'auto' }}>
                     <span className="panel-label">VERIFIED IDENTITY</span>
-                    <div style={{ fontSize: '0.6rem', color: 'var(--accent-orange)', wordBreak: 'break-all', background: '#000', padding: 10, border: '1px solid #222' }}>{apiKey}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--accent-yellow)', wordBreak: 'break-all', background: '#000', padding: 10, border: '1px solid #222' }}>{apiKey}</div>
                     <button className="btn btn-small" style={{ marginTop: 20, width: '100%', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }} onClick={() => logout()}>
                         <LogOut size={14} /> TERMINATE LINK
                     </button>
@@ -710,7 +710,7 @@ export default function App() {
                                     <div><label className="panel-label">Intensity</label><input type="number" value={cmdX} onChange={e => setCmdX(e.target.value)} /></div>
                                     <div><label className="panel-label">Precision</label><input type="number" value={cmdY} onChange={e => setCmdY(e.target.value)} /></div>
                                 </div>
-                                <button className="btn" style={{ width: '100%', padding: 20, borderColor: 'var(--accent-orange)', color: 'var(--accent-orange)' }} disabled={executing} onClick={() => runCommand(agentId)}>
+                                <button className="btn" style={{ width: '100%', padding: 20, borderColor: 'var(--accent-yellow)', color: 'var(--accent-yellow)' }} disabled={executing} onClick={() => runCommand(agentId)}>
                                     {executing ? <RefreshCw className="animate-spin" size={20} /> : <Command size={20} />}
                                     {executing ? 'Transmitting Intent...' : 'EXECUTE ACTION'}
                                 </button>
@@ -729,7 +729,7 @@ export default function App() {
                                         {history.map(log => (
                                             <div key={log.id} style={{ padding: 15, background: '#000', border: '1px solid #222', borderRadius: 4 }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                                                    <span style={{ color: 'var(--accent-orange)', fontSize: '0.7rem', fontWeight: 700 }}>{log.agent_id.toUpperCase()}</span>
+                                                    <span style={{ color: 'var(--accent-yellow)', fontSize: '0.7rem', fontWeight: 700 }}>{log.agent_id.toUpperCase()}</span>
                                                     <span style={{ color: '#444', fontSize: '0.6rem' }}>{new Date(log.timestamp).toLocaleString()}</span>
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 10 }}>

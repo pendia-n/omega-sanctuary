@@ -1,12 +1,12 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Kinetic RaaS API",
+    "title": "Orega Sanctuary RaaS API",
     "version": "1.0.0",
-    "description": "Kinetic Robotics-as-a-Service (RaaS) — a physics-aware, credit-based K-Spec execution engine. Headless API for AI agents and developers.",
+    "description": "Orega Sanctuary Robotics-as-a-Service (RaaS) — a physics-aware, credit-based K-Spec execution engine. Headless API for AI agents and developers.",
     "contact": {
-      "name": "Kinetic LLC",
-      "url": "https://kinetic.run"
+      "name": "Orega Sanctuary LLC",
+      "url": "https://orega.run"
     },
     "license": {
       "name": "Proprietary"
@@ -18,7 +18,7 @@
       "description": "Local development kernel"
     },
     {
-      "url": "https://api.kinetic.run",
+      "url": "https://api.orega.run",
       "description": "Production kernel"
     }
   ],
@@ -352,7 +352,7 @@
         "tags": ["Hardware"],
         "operationId": "registerNode",
         "summary": "Register a physical hardware node",
-        "description": "Registers an edge compute node into the Kinetic mesh. Returns a node_id and earning rate.",
+        "description": "Registers an edge compute node into the Orega Sanctuary mesh. Returns a node_id and earning rate.",
         "requestBody": {
           "required": false,
           "content": {

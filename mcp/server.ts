@@ -23,7 +23,7 @@ import { z } from 'zod';
 const KERNEL_URL = process.env.KINETIC_KERNEL_URL ?? 'http://localhost:4400';
 
 const server = new McpServer({
-    name: 'kinetic-raas',
+    name: 'orega-sanctuary',
     version: '1.0.0',
 });
 
@@ -42,8 +42,8 @@ async function kineticFetch(path: string, options: RequestInit = {}) {
 
 // ─── Tool 1: ignite ──────────────────────────────────────────────────────────
 server.tool(
-    'kinetic_ignite',
-    'Ignite a new Kinetic API identity. Returns a fresh API key with 160.0 starting credits. The key must be claimed within 9 seconds.',
+    'orega_ignite',
+    'Ignite a new Orega Sanctuary API identity. Returns a fresh API key with 160.0 starting credits. The key must be claimed within 9 seconds.',
     {},
     async () => {
         const { status, data } = await kineticFetch('/api/auth/ignite', { method: 'POST' });
@@ -66,9 +66,9 @@ server.tool(
 
 // ─── Tool 2: claim ───────────────────────────────────────────────────────────
 server.tool(
-    'kinetic_claim',
-    'Claim and activate an EPHEMERAL Kinetic identity. Call this immediately after kinetic_ignite with the returned apiKey.',
-    { apiKey: z.string().describe('The API key returned from kinetic_ignite') },
+    'orega_claim',
+    'Claim and activate an EPHEMERAL Sanctuary identity. Call this immediately after orega_ignite with the returned apiKey.',
+    { apiKey: z.string().describe('The API key returned from orega_ignite') },
     async ({ apiKey }) => {
         const { status, data } = await kineticFetch('/api/auth/claim', {
             method: 'POST',
@@ -88,8 +88,8 @@ server.tool(
 
 // ─── Tool 3: execute ─────────────────────────────────────────────────────────
 server.tool(
-    'kinetic_execute',
-    'Execute a K-Spec command sequence on a Kinetic agent. Consumes credits. Agents: Atlas (500kg/0.1mm), Hermes (50kg/0.01mm), Apollo (10kg/0.001mm). Primitives: K-MOVE, K-LIFT, K-GRIP, K-SENSE, K-SCAN, K-STREAM, K-TORQUE, K-FUSE, K-VERIFY, K-SONAR.',
+    'orega_execute',
+    'Execute a K-Spec command sequence on a Sanctuary agent. Consumes credits. Agents: Atlas (500kg/0.1mm), Hermes (50kg/0.01mm), Apollo (10kg/0.001mm). Primitives: K-MOVE, K-LIFT, K-GRIP, K-SENSE, K-SCAN, K-STREAM, K-TORQUE, K-FUSE, K-VERIFY, K-SONAR.',
     {
         apiKey: z.string().describe('Your active X-KSpec-API-Key'),
         agentId: z.enum(['Atlas', 'Hermes', 'Apollo']).describe('The target agent profile'),
@@ -131,8 +131,8 @@ server.tool(
 
 // ─── Tool 4: get_credits ─────────────────────────────────────────────────────
 server.tool(
-    'kinetic_credits',
-    'Check the current credit balance and status of a Kinetic API key.',
+    'orega_credits',
+    'Check the current credit balance and status of an Orega Sanctuary API key.',
     { apiKey: z.string().describe('The X-KSpec-API-Key to check') },
     async ({ apiKey }) => {
         const { status, data } = await kineticFetch('/api/user/credits', {
@@ -153,4 +153,4 @@ server.tool(
 // ─── Start ────────────────────────────────────────────────────────────────────
 const transport = new StdioServerTransport();
 await server.connect(transport);
-console.error('Kinetic MCP Server running (stdio). Kernel:', KERNEL_URL);
+console.error('Orega Sanctuary MCP Server running (stdio). Kernel:', KERNEL_URL);

@@ -488,8 +488,8 @@ app.post('/api/billing/checkout', async (c) => {
             price_data: {
                 currency: 'usd',
                 product_data: {
-                    name: `Kinetic Credits — ${tier.charAt(0).toUpperCase() + tier.slice(1)} Tier`,
-                    description: `${tierConfig.credits} Kinetic execution credits added to your identity.`,
+                    name: `Orega Sanctuary Credits — ${tier.charAt(0).toUpperCase() + tier.slice(1)} Tier`,
+                    description: `${tierConfig.credits} execution credits added to your sanctuary identity.`,
                 },
                 unit_amount: tierConfig.priceUSDCents,
             },
@@ -543,5 +543,5 @@ app.post('/api/billing/webhook', async (c) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 const port = 4400;
-console.log(`Kinetic Kernel Active on Port ${port} (Physics-Aware Mode)`);
+console.log(`Orega Sanctuary Kernel Active on Port ${port} (Physics-Aware Mode)`);
 serve({ fetch: app.fetch, port });
