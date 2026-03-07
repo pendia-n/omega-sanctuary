@@ -1,0 +1,404 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Kinetic RaaS API",
+    "version": "1.0.0",
+    "description": "Kinetic Robotics-as-a-Service (RaaS) — a physics-aware, credit-based K-Spec execution engine. Headless API for AI agents and developers.",
+    "contact": {
+      "name": "Kinetic LLC",
+      "url": "https://kinetic.run"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4400",
+      "description": "Local development kernel"
+    },
+    {
+      "url": "https://api.kinetic.run",
+      "description": "Production kernel"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-KSpec-API-Key",
+        "description": "API key obtained from POST /api/auth/ignite"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "KSpecCommand": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["K-MOVE", "K-LIFT", "K-GRIP", "K-SENSE", "K-SCAN", "K-STREAM", "K-TORQUE", "K-FUSE", "K-VERIFY", "K-SONAR"],
+            "description": "The K-Spec primitive instruction type"
+          },
+          "params": {
+            "type": "object",
+            "description": "Command-specific parameters (x, y, weight, temp, precision, etc.)",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Telemetry": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "NOMINAL" },
+          "joint_tension": { "type": "string", "example": "14.23 N" },
+          "magnetic_flux": { "type": "string", "example": "0.874 T" },
+          "thermal_envelope": { "type": "string", "example": "34.9 C" },
+          "power_draw": { "type": "string", "example": "321 W" },
+          "latency": { "type": "string", "example": "27 ms" },
+          "structural_stability": { "type": "string", "example": "99.98%" },
+          "kinetic_potential": { "type": "string", "example": "743 J" }
+        }
+      }
+    }
+  },
+  "tags": [
+    { "name": "Auth", "description": "Identity ignition and claiming" },
+    { "name": "Execution", "description": "K-Spec command execution and ledger" },
+    { "name": "Billing", "description": "Credit top-up via Stripe" },
+    { "name": "Hardware", "description": "Physical node registration" },
+    { "name": "Admin", "description": "Internal oversight endpoints (not for public agents)" }
+  ],
+  "paths": {
+    "/api/auth/ignite": {
+      "post": {
+        "tags": ["Auth"],
+        "operationId": "igniteIdentity",
+        "summary": "Ignite a new API identity",
+        "description": "Creates a new EPHEMERAL API key with 160.0 starting credits. The key must be claimed within 9 seconds or it expires. This is the entry point for all agents and users.",
+        "responses": {
+          "200": {
+            "description": "Identity successfully ignited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "apiKey": { "type": "string", "example": "sk_550e8400-e29b-41d4-a716-446655440000" },
+                    "status": { "type": "string", "example": "IGNITED" },
+                    "credits": { "type": "number", "example": 160.0 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/claim": {
+      "post": {
+        "tags": ["Auth"],
+        "operationId": "claimIdentity",
+        "summary": "Claim and activate an EPHEMERAL identity",
+        "description": "Transitions a key from EPHEMERAL to ACTIVE and records first_login_at. Must be called within 9 seconds of ignition or the key is destroyed.",
+        "security": [{ "ApiKeyAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Identity claimed and activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ACTIVE" },
+                    "credits": { "type": "number", "example": 160.0 }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Missing API key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "403": { "description": "Invalid or expired key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/execute": {
+      "post": {
+        "tags": ["Execution"],
+        "operationId": "executeCommands",
+        "summary": "Execute a K-Spec command sequence",
+        "description": "Submits a sequence of K-Spec primitive commands to a named agent profile. Each command is validated by the Physics Compiler and consumes credits. Cost: K-VERIFY=3.0c, complex ops=1.5c, standard=1.0c per command.",
+        "security": [{ "ApiKeyAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["agentId", "commands"],
+                "properties": {
+                  "agentId": {
+                    "type": "string",
+                    "enum": ["Atlas", "Hermes", "Apollo"],
+                    "description": "Atlas: heavy-duty (500kg max, 0.1mm precision). Hermes: standard (50kg, 0.01mm). Apollo: precision (10kg, 0.001mm)."
+                  },
+                  "commands": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/KSpecCommand" },
+                    "minItems": 1
+                  }
+                }
+              },
+              "example": {
+                "agentId": "Hermes",
+                "commands": [
+                  { "type": "K-MOVE", "params": { "x": 10, "y": 20 } },
+                  { "type": "K-GRIP", "params": { "x": 10, "y": 20 } },
+                  { "type": "K-VERIFY", "params": {} }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful execution with telemetry and cryptographic proof",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "agentId": { "type": "string" },
+                    "executionProof": { "type": "string", "description": "SHA-256 hash of the execution — serves as an immutable audit record" },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": { "type": "string" },
+                          "status": { "type": "string", "example": "SUCCESS" },
+                          "telemetry": { "$ref": "#/components/schemas/Telemetry" }
+                        }
+                      }
+                    },
+                    "remainingCredits": { "type": "number" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Physics Compiler rejection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "example": "PHYSICS_COMPILER_ERROR" },
+                    "details": { "type": "string", "example": "Structural Hazard: Load 600kg exceeds Atlas capacity (500kg)" }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "example": "Insufficient Credits" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Missing API key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "403": { "description": "Invalid key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/user/credits": {
+      "get": {
+        "tags": ["Execution"],
+        "operationId": "getCredits",
+        "summary": "Get remaining credit balance",
+        "security": [{ "ApiKeyAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Current credit balance and key status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "credits": { "type": "number", "example": 142.5 },
+                    "status": { "type": "string", "example": "ACTIVE" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "403": { "description": "Invalid key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/user/history": {
+      "get": {
+        "tags": ["Execution"],
+        "operationId": "getHistory",
+        "summary": "Get last 50 execution logs for this identity",
+        "security": [{ "ApiKeyAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Array of action logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "agent_id": { "type": "string" },
+                          "command_sequence": { "type": "string" },
+                          "results": { "type": "string" },
+                          "proof": { "type": "string" },
+                          "timestamp": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/billing/checkout": {
+      "post": {
+        "tags": ["Billing"],
+        "operationId": "createCheckout",
+        "summary": "Create a Stripe Checkout session to top up credits",
+        "description": "Returns a Stripe-hosted checkout URL. Redirect the user to this URL. On success, Stripe fires a webhook that automatically credits the identity.",
+        "security": [{ "ApiKeyAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["tier"],
+                "properties": {
+                  "tier": {
+                    "type": "string",
+                    "enum": ["starter", "pro", "enterprise"],
+                    "description": "starter=500c ($5), pro=1500c ($12), enterprise=5000c ($35)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stripe Checkout session created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "checkoutUrl": { "type": "string", "format": "uri" },
+                    "sessionId": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid tier", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/billing/webhook": {
+      "post": {
+        "tags": ["Billing"],
+        "operationId": "stripeWebhook",
+        "summary": "Stripe webhook listener (internal)",
+        "description": "Receives Stripe events. Verifies signature using STRIPE_WEBHOOK_SECRET. On checkout.session.completed, tops up credits for the identity stored in session metadata. DO NOT call this manually.",
+        "responses": {
+          "200": { "description": "Event processed" },
+          "400": { "description": "Signature verification failed or malformed event" }
+        }
+      }
+    },
+    "/api/register": {
+      "post": {
+        "tags": ["Hardware"],
+        "operationId": "registerNode",
+        "summary": "Register a physical hardware node",
+        "description": "Registers an edge compute node into the Kinetic mesh. Returns a node_id and earning rate.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nodeType": { "type": "string" },
+                  "location": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Node registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "NODE_REGISTERED" },
+                    "node_id": { "type": "string", "example": "node_a1b2c3d4" },
+                    "earning_rate": { "type": "string", "example": "0.4c/cmd" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/openapi.json": {
+      "get": {
+        "tags": ["Admin"],
+        "operationId": "getOpenApiSpec",
+        "summary": "Fetch this OpenAPI spec",
+        "description": "Returns this machine-readable spec. Use this endpoint for agent autodiscovery.",
+        "responses": {
+          "200": {
+            "description": "OpenAPI 3.1 JSON spec",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    }
+  }
+}

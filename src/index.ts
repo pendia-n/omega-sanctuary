@@ -3,7 +3,25 @@ import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import Stripe from 'stripe';
 import db from './db.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Stripe setup (key is optional at startup so the API works without billing configured)
+const stripe = process.env.STRIPE_SECRET_KEY
+    ? new Stripe(process.env.STRIPE_SECRET_KEY)
+    : null;
+
+// Credit tiers: tier name → { credits, priceUSDCents }
+const CREDIT_TIERS: Record<string, { credits: number; priceUSDCents: number }> = {
+    starter:    { credits: 500,  priceUSDCents: 500  },  // $5
+    pro:        { credits: 1500, priceUSDCents: 1200 },  // $12
+    enterprise: { credits: 5000, priceUSDCents: 3500 },  // $35
+};
 
 const app = new Hono();
 
@@ -434,6 +452,96 @@ app.post('/api/admin/password', async (c) => {
     return c.json({ status: "PASSWORD_UPDATED" });
 });
 
+// ─── OPENAPI SPEC ────────────────────────────────────────────────────────────
+app.get('/api/openapi.json', (c) => {
+    try {
+        const specPath = join(__dirname, '..', 'openapi.json');
+        const spec = JSON.parse(readFileSync(specPath, 'utf-8'));
+        return c.json(spec);
+    } catch (e) {
+        return c.json({ error: 'Spec not found' }, 404);
+    }
+});
+
+// ─── BILLING: CHECKOUT ───────────────────────────────────────────────────────
+app.post('/api/billing/checkout', async (c) => {
+    if (!stripe) return c.json({ error: 'Billing not configured. Set STRIPE_SECRET_KEY.' }, 503);
+
+    const apiKey = c.req.header('X-KSpec-API-Key');
+    if (!apiKey) return c.json({ error: 'Unauthorized' }, 401);
+    const keyHash = createHash('sha256').update(apiKey).digest('hex');
+    const keyData = db.prepare('SELECT id FROM api_keys WHERE key_hash = ?').get(keyHash) as any;
+    if (!keyData) return c.json({ error: 'Invalid Key' }, 403);
+
+    const body = await c.req.json();
+    const { tier } = body;
+    const tierConfig = CREDIT_TIERS[tier];
+    if (!tierConfig) return c.json({ error: `Invalid tier. Valid: ${Object.keys(CREDIT_TIERS).join(', ')}` }, 400);
+
+    const successUrl = (process.env.PRODUCTION_UI_URL || 'http://localhost:3000') + '/?billing=success';
+    const cancelUrl  = (process.env.PRODUCTION_UI_URL || 'http://localhost:3000') + '/?billing=cancelled';
+
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        line_items: [{
+            price_data: {
+                currency: 'usd',
+                product_data: {
+                    name: `Kinetic Credits — ${tier.charAt(0).toUpperCase() + tier.slice(1)} Tier`,
+                    description: `${tierConfig.credits} Kinetic execution credits added to your identity.`,
+                },
+                unit_amount: tierConfig.priceUSDCents,
+            },
+            quantity: 1,
+        }],
+        metadata: {
+            apiKeyId: keyData.id,
+            creditAmount: String(tierConfig.credits),
+            tier,
+        },
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+    });
+
+    return c.json({ checkoutUrl: session.url, sessionId: session.id });
+});
+
+// ─── BILLING: STRIPE WEBHOOK ─────────────────────────────────────────────────
+app.post('/api/billing/webhook', async (c) => {
+    if (!stripe) return c.json({ error: 'Billing not configured.' }, 503);
+
+    const sig = c.req.header('stripe-signature');
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!sig || !webhookSecret) return c.json({ error: 'Missing signature or secret' }, 400);
+
+    const rawBody = await c.req.text();
+    let event: Stripe.Event;
+    try {
+        event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+    } catch (err: any) {
+        console.error('[STRIPE WEBHOOK] Signature verification failed:', err.message);
+        return c.json({ error: 'Webhook signature invalid' }, 400);
+    }
+
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const apiKeyId    = session.metadata?.apiKeyId;
+        const creditAmount = Number(session.metadata?.creditAmount ?? 0);
+
+        if (!apiKeyId || creditAmount <= 0) {
+            console.error('[STRIPE WEBHOOK] Missing metadata on session:', session.id);
+            return c.json({ error: 'Bad metadata' }, 400);
+        }
+
+        db.prepare('UPDATE api_keys SET credits = credits + ? WHERE id = ?').run(creditAmount, apiKeyId);
+        console.log(`[STRIPE WEBHOOK] Credited ${creditAmount}c to identity ${apiKeyId} (session ${session.id})`);
+    }
+
+    return c.json({ received: true });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 const port = 4400;
 console.log(`Kinetic Kernel Active on Port ${port} (Physics-Aware Mode)`);
 serve({ fetch: app.fetch, port });

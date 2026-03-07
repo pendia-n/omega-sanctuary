@@ -6,13 +6,17 @@
         "dev": "tsx watch src/index.ts",
         "build": "tsc",
         "start": "node dist/index.js",
-        "ui": "cd ui && npm run dev"
+        "ui": "cd ui && npm run dev",
+        "mcp": "tsx mcp/server.ts"
     },
     "dependencies": {
         "@hono/node-server": "^1.19.9",
+        "@modelcontextprotocol/sdk": "^1.27.1",
         "better-sqlite3": "^11.8.1",
         "hono": "^4.7.2",
-        "uuid": "^11.0.5"
+        "stripe": "^20.4.1",
+        "uuid": "^11.0.5",
+        "zod": "^3.24.2"
     },
     "devDependencies": {
         "@types/better-sqlite3": "^7.6.2",
