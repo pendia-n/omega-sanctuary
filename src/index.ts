@@ -137,45 +137,50 @@ if (process.env.RESET_ADMIN_PASSWORD === 'true' || !adminConfig) {
 }
 
 // Background Refill Task: Processes all identities every 24h based on created_at
+// Core Refill Logic: Extracted so it can be triggered by background task OR API call
+function checkAndRefillKey(key: any): boolean {
+    if (key.status !== 'ACTIVE') return false;
+
+    const now = Date.now();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const createdAt = new Date(key.created_at + (key.created_at.includes('Z') ? '' : 'Z')).getTime();
+    const totalCyclesPassed = Math.floor((now - createdAt) / msPerDay);
+    
+    const lastRefillDate = new Date(key.last_refill + (key.last_refill.includes('Z') ? '' : 'Z')).getTime();
+    const cyclesAlreadyProcessed = Math.floor((lastRefillDate - createdAt) / msPerDay);
+
+    const pendingCycles = totalCyclesPassed - cyclesAlreadyProcessed;
+
+    if (pendingCycles > 0) {
+        let currentCredits = key.credits;
+        let newRefillCount = key.refill_count || 0;
+        let actuallyRefilledAmount = 0;
+
+        for (let i = 0; i < pendingCycles; i++) {
+            if (currentCredits <= 160) {
+                currentCredits += 32;
+                actuallyRefilledAmount += 32;
+                newRefillCount++;
+            }
+        }
+
+        const newLastRefillDate = new Date(createdAt + totalCyclesPassed * msPerDay).toISOString();
+        db.prepare('UPDATE api_keys SET credits = ?, last_refill = ?, refill_count = ? WHERE id = ?')
+            .run(currentCredits, newLastRefillDate, newRefillCount, key.id);
+
+        if (actuallyRefilledAmount > 0) {
+            console.log(`[REFILL] Identity ${key.id}: +${actuallyRefilledAmount} credits. Cycles: ${pendingCycles}`);
+            return true;
+        }
+    }
+    return false;
+}
+
 function processAllRefills() {
     try {
-        const now = Date.now();
-        const msPerDay = 24 * 60 * 60 * 1000;
         const activeKeys = db.prepare("SELECT * FROM api_keys WHERE status = 'ACTIVE'").all() as any[];
-
         for (const key of activeKeys) {
-            const createdAt = new Date(key.created_at + 'Z').getTime();
-            const totalCyclesPassed = Math.floor((now - createdAt) / msPerDay);
-            // We need to track how many cycles we've already CHECKED. 
-            // Since we don't have a 'checked_cycles' column, we can use last_refill 
-            // to infer how many cycles were already processed.
-            const lastRefillDate = new Date(key.last_refill + (key.last_refill.includes('Z') ? '' : 'Z')).getTime();
-            const cyclesAlreadyProcessed = Math.floor((lastRefillDate - createdAt) / msPerDay);
-
-            const pendingCycles = totalCyclesPassed - cyclesAlreadyProcessed;
-
-            if (pendingCycles > 0) {
-                let currentCredits = key.credits;
-                let newRefillCount = key.refill_count || 0;
-                let actuallyRefilledAmount = 0;
-
-                for (let i = 0; i < pendingCycles; i++) {
-                    if (currentCredits <= 160) {
-                        currentCredits += 32;
-                        actuallyRefilledAmount += 32;
-                        newRefillCount++; // Only increment if we actually refilled
-                    }
-                }
-
-                // Update last_refill to reflect that we've processed up to this current 24h window
-                const newLastRefillDate = new Date(createdAt + totalCyclesPassed * msPerDay).toISOString();
-                db.prepare('UPDATE api_keys SET credits = ?, last_refill = ?, refill_count = ? WHERE id = ?')
-                    .run(currentCredits, newLastRefillDate, newRefillCount, key.id);
-
-                if (actuallyRefilledAmount > 0) {
-                    console.log(`[BACKGROUND-REFILL] Identity ${key.id}: Refilled ${actuallyRefilledAmount} credits. New refill count: ${newRefillCount}`);
-                }
-            }
+            checkAndRefillKey(key);
         }
     } catch (e) {
         console.error('[BACKGROUND-REFILL] Error:', e);
@@ -309,9 +314,20 @@ app.get('/api/user/credits', (c) => {
     const apiKey = c.req.header('X-KSpec-API-Key');
     if (!apiKey) return c.json({ error: "Unauthorized" }, 401);
     const keyHash = createHash('sha256').update(apiKey).digest('hex');
-    const keyData = db.prepare('SELECT credits, status FROM api_keys WHERE key_hash = ?').get(keyHash) as any;
+    const keyData = db.prepare('SELECT * FROM api_keys WHERE key_hash = ?').get(keyHash) as any;
     if (!keyData) return c.json({ error: "Invalid Key" }, 403);
-    return c.json({ credits: keyData.credits, status: keyData.status });
+
+    // Instant check on access to ensure UI is always in sync
+    const refilled = checkAndRefillKey(keyData);
+    
+    // Refresh local keyData if refilled
+    let finalCredits = keyData.credits;
+    if (refilled) {
+        const updated = db.prepare('SELECT credits FROM api_keys WHERE id = ?').get(keyData.id) as any;
+        finalCredits = updated.credits;
+    }
+
+    return c.json({ credits: finalCredits, status: keyData.status, refilled });
 });
 
 app.get('/api/user/history', (c) => {

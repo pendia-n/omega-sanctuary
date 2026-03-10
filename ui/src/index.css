@@ -406,3 +406,18 @@ pre {
   font-size: 0.75rem;
   color: var(--text-dim);
 }
+@keyframes flash {
+  0% { background: transparent; }
+  50% { background: var(--accent-yellow-glow); }
+  100% { background: transparent; }
+}
+
+.refill-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  animation: flash 1s ease-out;
+}

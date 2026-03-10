@@ -98,13 +98,20 @@ export default function App() {
             const hisData = await hisRes.json();
 
             if (creData.error) throw new Error(creData.error);
+            
+            // Handle Smooth Refill Notification
+            if (creData.refilled) {
+                console.log("SANCTUARY_PROTOCOL: Credits refilled automatically.");
+                // We'll set a temporary notification state or just update the credits
+                // The user sees the number jump, which is the "smooth" way.
+            }
+
             setCredits(creData.credits);
             setHistory(hisData.logs || []);
             setApiKey(key);
             localStorage.setItem('kinetic_key', key);
         } catch (e) {
             console.error(e);
-            // If we are in admin mode, don't boot the user out, just clear the bad key
             localStorage.removeItem('kinetic_key');
             setApiKey(null);
             if (!isAdminMode) logout();
@@ -204,7 +211,14 @@ export default function App() {
     };
 
     useEffect(() => {
-        if (apiKey) fetchData(apiKey);
+        if (apiKey) {
+            fetchData(apiKey);
+            // Polling: Every 60 seconds, verify credits (triggers refill check in backend)
+            const interval = setInterval(() => {
+                fetchData(apiKey);
+            }, 60000);
+            return () => clearInterval(interval);
+        }
     }, [apiKey]);
 
     const logout = (clearAdmin = true) => {
@@ -623,9 +637,11 @@ export default function App() {
                             <div className="credits-val" style={{ fontSize: '1.2rem', color: 'var(--accent-green)' }}>8</div>
                             <div className="panel-label" style={{ marginBottom: 0 }}>PRIMITIVES</div>
                         </div> */}
-                        <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
+                        <div className="panel" style={{ flex: 1, padding: '10px 20px', position: 'relative', overflow: 'hidden' }}>
                             <div className="credits-val" style={{ fontSize: '1.2rem' }}>{credits?.toFixed(1) || '0.0'}</div>
                             <div className="panel-label" style={{ marginBottom: 0 }}>CREDITS</div>
+                            {/* Subtle flash effect when credits change */}
+                            <div key={credits} className="refill-flash"></div>
                         </div>
                         {/* <div className="panel" style={{ flex: 1, padding: '10px 20px' }}>
                             <div className="credits-val" style={{ fontSize: '1.2rem', color: 'var(--accent-green)' }}>1.0</div>
