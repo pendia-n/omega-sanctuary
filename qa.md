@@ -1,4 +1,4 @@
-# Kinetic RaaS: Q&A
+# orega RaaS: Q&A
 
 ### Q1: Is Agent Atlas a real agentic product?
 **Answer**: In the context of this RaaS implementation, **Agent Atlas** is a virtualized agent profile representing a "Logistics/Heavy Lifting" robotic class. While the hardware is simulated in this code, the **API Protocol (K-Spec)** is a real-world specification designed to interface with physical robots. Atlas serves as a functional blueprint for how an AI Agent would command a physical arm or mobile platform.

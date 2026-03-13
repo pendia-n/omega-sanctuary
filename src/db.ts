@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 
-const db = new Database('kinetic.db');
+const db = new Database('orega.db');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS api_keys (

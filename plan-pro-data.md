@@ -17,7 +17,7 @@ A third-party "Inspector Agent" (e.g., a camera) observes the task and signs a "
 - **Pros**: External verification. 
 - **Cons**: Requires additional hardware.
 
-## Selected Method for Kinetic v1
+## Selected Method for orega v1
 **Combined Hash Proof**: The response from `/api/execute` will now include a `telemetry` object containing:
 - `peak_torque`: Measured in Nm.
 - `heat_signature`: CPU/Motor temperature in Celsius.

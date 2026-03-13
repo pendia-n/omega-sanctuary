@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /**
- * Kinetic RaaS — MCP Server
+ * orega RaaS — MCP Server
  *
  * Exposes 4 tools for any MCP-compatible AI host (Claude Desktop, Cursor, etc.)
- * This is a thin stdio wrapper over the Kinetic Kernel at http://localhost:4400
+ * This is a thin stdio wrapper over the orega Kernel at http://localhost:4400
  *
  * To add to Claude Desktop, add to ~/Library/Application Support/Claude/claude_desktop_config.json:
  * {
  *   "mcpServers": {
- *     "kinetic": {
+ *     "orega": {
  *       "command": "npx",
- *       "args": ["tsx", "/Users/nosensetxt/kinetic/mcp/server.ts"]
+ *       "args": ["tsx", "/Users/nosensetxt/orega/mcp/server.ts"]
  *     }
  *   }
  * }
@@ -20,7 +20,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
-const KERNEL_URL = process.env.KINETIC_KERNEL_URL ?? 'http://localhost:4400';
+const KERNEL_URL = process.env.orega_KERNEL_URL ?? 'http://localhost:4400';
 
 const server = new McpServer({
     name: 'orega-sanctuary',
@@ -28,7 +28,7 @@ const server = new McpServer({
 });
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
-async function kineticFetch(path: string, options: RequestInit = {}) {
+async function oregaFetch(path: string, options: RequestInit = {}) {
     const res = await fetch(`${KERNEL_URL}${path}`, {
         ...options,
         headers: {
@@ -46,7 +46,7 @@ server.tool(
     'Ignite a new Orega Sanctuary API identity. Returns a fresh API key with 160.0 starting credits. The key must be claimed within 9 seconds.',
     {},
     async () => {
-        const { status, data } = await kineticFetch('/api/auth/ignite', { method: 'POST' });
+        const { status, data } = await oregaFetch('/api/auth/ignite', { method: 'POST' });
         if (status !== 200) {
             return { content: [{ type: 'text', text: `Error: ${JSON.stringify(data)}` }], isError: true };
         }
@@ -57,7 +57,7 @@ server.tool(
                     apiKey: data.apiKey,
                     credits: data.credits,
                     status: data.status,
-                    instruction: 'Call kinetic_claim immediately with this apiKey to activate the identity before 9 seconds elapse.',
+                    instruction: 'Call orega_claim immediately with this apiKey to activate the identity before 9 seconds elapse.',
                 }, null, 2),
             }],
         };
@@ -70,7 +70,7 @@ server.tool(
     'Claim and activate an EPHEMERAL Sanctuary identity. Call this immediately after orega_ignite with the returned apiKey.',
     { apiKey: z.string().describe('The API key returned from orega_ignite') },
     async ({ apiKey }) => {
-        const { status, data } = await kineticFetch('/api/auth/claim', {
+        const { status, data } = await oregaFetch('/api/auth/claim', {
             method: 'POST',
             headers: { 'X-KSpec-API-Key': apiKey },
         });
@@ -101,7 +101,7 @@ server.tool(
         ).min(1).describe('Array of K-Spec command objects'),
     },
     async ({ apiKey, agentId, commands }) => {
-        const { status, data } = await kineticFetch('/api/execute', {
+        const { status, data } = await oregaFetch('/api/execute', {
             method: 'POST',
             headers: { 'X-KSpec-API-Key': apiKey },
             body: JSON.stringify({ agentId, commands }),
@@ -135,7 +135,7 @@ server.tool(
     'Check the current credit balance and status of an Orega Sanctuary API key.',
     { apiKey: z.string().describe('The X-KSpec-API-Key to check') },
     async ({ apiKey }) => {
-        const { status, data } = await kineticFetch('/api/user/credits', {
+        const { status, data } = await oregaFetch('/api/user/credits', {
             headers: { 'X-KSpec-API-Key': apiKey },
         });
         if (status !== 200) {

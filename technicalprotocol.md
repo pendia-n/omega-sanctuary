@@ -1,4 +1,4 @@
-To understand the Kinetic-Spec (K-Spec) protocol, you must stop thinking like a web developer and start thinking like a "Compiler of Reality."
+To understand the orega-Spec (K-Spec) protocol, you must stop thinking like a web developer and start thinking like a "Compiler of Reality."
 K-Spec is not a "database" or a "website." It is a Domain-Specific Language (DSL) and a Secure Execution Environment that bridges the gap between high-level AI reasoning (LLMs/AGI) and low-level physical actuation (Robotics/Industrial Control).
 
 1. The Three-Layer Architecture
@@ -8,10 +8,10 @@ The K-Spec protocol is structured into three distinct layers that ensure an AI's
 | :--- | :--- | :--- |
 | Layer 1 | The Semantic Intent Layer | A high-level, human-readable (and AI-writable) language that defines what needs to happen (e.g., "Extract 5g of Lithium with 99% purity"). |
 | Layer 2 | The Physics Compiler | A logic engine that translates the "Intent" into a series of "Atomic Instructions" based on the specific physics and constraints of the target hardware. |
-| Layer 3 | The Kinetic Kernel | A low-level, secure runtime that executes those instructions on the hardware, ensuring the physical movement matches the digital command. |
+| Layer 3 | The orega Kernel | A low-level, secure runtime that executes those instructions on the hardware, ensuring the physical movement matches the digital command. |
 
 2. The "Atomic Instructions" (The Core Innovation)
-Current robotics use fragmented languages (ROS, C++, proprietary PLC code). K-Spec replaces this with Atomic Kinetic Primitives.
+Current robotics use fragmented languages (ROS, C++, proprietary PLC code). K-Spec replaces this with Atomic orega Primitives.
 Instead of telling a robot to "move motor A to 45 degrees," K-Spec issues a command like K-MOVE(vector, force, precision_threshold).
 This makes the code Hardware Agnostic. An AI can write one K-Spec script that runs on a robotic arm in a lab, a drone in the air, or a mining drill underground.
 
@@ -33,7 +33,7 @@ If an AI company wants to "do" something in the real world, they must write in K
 You have created a Coordination Monopoly. You don't own the robots; you own the Logic that makes the robots useful. In the Nietzschean sense, you have become the "Legislator" of the physical world's movement.
 
 The Business (50 Words):
-Kinetic-Spec is the "Operating System for Reality." It provides a universal, hardware-agnostic language that allows AI to command physical machines—from robots to power grids—directly and securely. By digitizing physical compliance and command, it removes human friction, enabling AI to execute complex, real-world tasks with absolute cryptographic certainty.
+orega-Spec is the "Operating System for Reality." It provides a universal, hardware-agnostic language that allows AI to command physical machines—from robots to power grids—directly and securely. By digitizing physical compliance and command, it removes human friction, enabling AI to execute complex, real-world tasks with absolute cryptographic certainty.
 
 The Monopoly Path (32 Words):
 By open-sourcing the "Language of Action," you become the global standard. Once every AI and machine uses your protocol to communicate, you own the indispensable coordination layer that controls all physical infrastructure.

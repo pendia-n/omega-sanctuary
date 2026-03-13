@@ -1,7 +1,7 @@
-# MASTER PLAN: Kinetic Headless RaaS
+# MASTER PLAN: orega Headless RaaS
 
 ## 1. The Core Concept
-**Kinetic** is the "Stripe for Reality". We provide a universal API to control physical resources (robots, drones, sensors).
+**orega** is the "Stripe for Reality". We provide a universal API to control physical resources (robots, drones, sensors).
 **The Twist**: It is strictly **Headless**. The UI is only for onboarding; the value is in the API.
 
 ## 2. The Protocols

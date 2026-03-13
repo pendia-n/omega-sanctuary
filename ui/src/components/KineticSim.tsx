@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-interface KineticSimProps {
+interface oregaSimProps {
     active: boolean;
     agentId: string;
     commands?: any[] | null;
@@ -9,7 +9,7 @@ interface KineticSimProps {
 // Particle system for streaming/fuse effects
 interface Particle { x: number; y: number; vx: number; vy: number; life: number; color: string; size: number; }
 
-export default function KineticSim({ active, agentId, commands }: KineticSimProps) {
+export default function oregaSim({ active, agentId, commands }: oregaSimProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const particlesRef = useRef<Particle[]>([]);
 

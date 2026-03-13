@@ -3,7 +3,7 @@
  * Sovereign Agency for the Agentic Economy.
  */
 
-export class KineticClient {
+export class oregaClient {
     constructor(apiKey, baseUrl = 'http://localhost:4400') {
         this.apiKey = apiKey;
         this.baseUrl = baseUrl;

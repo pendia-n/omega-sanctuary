@@ -1,4 +1,4 @@
-# IMPL-PLAN: Kinetic Headless RaaS (Phase 1)
+# IMPL-PLAN: orega Headless RaaS (Phase 1)
 
 ## 1. System Architecture
 **Stack**: Node.js (Hono), SQLite (Better-SQLite3), React (Vite).

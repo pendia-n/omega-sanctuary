@@ -65,7 +65,7 @@
           "power_draw": { "type": "string", "example": "321 W" },
           "latency": { "type": "string", "example": "27 ms" },
           "structural_stability": { "type": "string", "example": "99.98%" },
-          "kinetic_potential": { "type": "string", "example": "743 J" }
+          "orega_potential": { "type": "string", "example": "743 J" }
         }
       }
     }

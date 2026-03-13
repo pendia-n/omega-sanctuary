@@ -8,7 +8,7 @@ How do autonomous agents pay for physical agency without human hand-holding?
 
 ## 2. Automated Refills
 - **Low-Balance Triggers**: The Kernel (RaaS API) returns a `402 Payment Required` with a direct link to a Stripe/Crypto checkout that the agent can pass back to the user's notification system.
-- **Agent Self-Payment**: In a full "Agentic Economy," the agent has its own lightning wallet. It pays the Kinetic API in micro-transactions (SATS) per command to get the `sha256_proof`.
+- **Agent Self-Payment**: In a full "Agentic Economy," the agent has its own lightning wallet. It pays the orega API in micro-transactions (SATS) per command to get the `sha256_proof`.
 
 ## 3. The Receipt of Reality
 The `executionProof` is the agent's "invoice". They present this to their user to prove they actually did the work in the real world, justifying their own service fees.

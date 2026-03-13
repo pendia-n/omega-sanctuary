@@ -1,17 +1,17 @@
-# Kinetic Deployment Architecture
+# orega Deployment Architecture
 
-This document outlines the deployment strategy and hosting environments for the various components of the Kinetic Robotics-as-a-Service (RaaS) platform.
+This document outlines the deployment strategy and hosting environments for the various components of the orega Robotics-as-a-Service (RaaS) platform.
 
 ## 1. Core Backend (`/src`)
 The backend is a high-performance Hono-based server running on Node.js.
 
-- **Technology Stack**: Node.js, Hono, SQLite (`kinetic.db`).
+- **Technology Stack**: Node.js, Hono, SQLite (`orega.db`).
 - **Build Process**: `npm run build` (compiles TypeScript to `dist/`).
 - **Deployment**: 
     - **Environment**: Typically hosted on a Linux VPS or cloud instance (e.g., AWS EC2, DigitalOcean Droplet, GCP Compute Engine).
     - **Process Manager**: Managed via `pm2` or a systemd service to ensure high availability and automatic restarts.
     - **Port**: Default production port is **4400**.
-- **Data Persistence**: Uses a local `kinetic.db` file. For horizontal scaling, this would transition to a managed PostgreSQL cluster.
+- **Data Persistence**: Uses a local `orega.db` file. For horizontal scaling, this would transition to a managed PostgreSQL cluster.
 
 ## 2. Sanctuary Terminal UI (`/ui`)
 The frontend is a modern React application managed by Vite.
@@ -28,7 +28,7 @@ The SDK provides a cryptographic bridge for external agents to interact with K-S
 
 - **Technology Stack**: Vanilla JavaScript (ESM).
 - **Inclusion**:
-    - **NPM**: Can be published as `@kinetic/sdk` for Node.js or browser-based developer tools.
+    - **NPM**: Can be published as `@orega/sdk` for Node.js or browser-based developer tools.
     - **Static CDN**: Served as a standalone JS file for rapid integration into third-party dashboards.
 - **Purpose**: Handles identity restoration, API key management, and command sequencing for external software integrations.
 

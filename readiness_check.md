@@ -1,4 +1,4 @@
-# Kinetic RaaS: Readiness Checklist
+# orega RaaS: Readiness Checklist
 
 ## 1. Core Logic (Refill Protocol)
 - [ ] **24h Window Enforcement**: Refills are processed based on the 24-hour cycle from `last_refill`.

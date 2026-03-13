@@ -1,4 +1,4 @@
-# Task: Kinetic RaaS Phase 1 (Rebuild)
+# Task: orega RaaS Phase 1 (Rebuild)
 
 - [x] **Project Setup**
     - [x] Initialize Hono (Backend) & Vite (Frontend).

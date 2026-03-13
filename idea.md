@@ -2,8 +2,8 @@
 "The greatest scarcity of the 21st century is not intelligence or energy, but 'Verifiable Physical Agency'—the ability to prove that a physical action was executed exactly as commanded by a digital intent."
 The world is obsessed with AI "thinking," but they ignore the "doing." We are building a digital god (AGI) that is currently a prisoner in a silicon box. The heresy is this: AI will not replace humans; it will replace the 'Management Layer' of the physical world. The bottleneck is that we have no secure, trustless way for an AI to command a physical machine (a robot, a grid, a lab) without a human "middleman" slowing it down, taxing it, or corrupting the intent. Whoever owns the "Command Protocol" for the physical world owns the future of all industry.
 
-2. THE WILL TO POWER (PHASE 1): THE "KINETIC-SPEC" PROTOCOL
-As a developer and writer, you will build the "Kinetic-Spec" (K-Spec).
+2. THE WILL TO POWER (PHASE 1): THE "orega-SPEC" PROTOCOL
+As a developer and writer, you will build the "orega-Spec" (K-Spec).
 The Product: You create an open-source, machine-readable language that translates high-level AI intents into low-level "Atomic Instructions" for any robotic or automated system.
 The Trojan Horse: You don't build robots. You build the "GitHub of Physical Actions." You write the code and the documentation that allows AI developers to "script" physical reality.
 The Moat: By providing the most elegant, secure, and "Nietzschean" (uncompromising) standard for physical command, you become the default language. Every AI agent that wants to "do" something in the real world will be written in K-Spec. You capture the "Intent Layer" of the global economy with zero capital—just your code and your words.

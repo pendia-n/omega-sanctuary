@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, Shield, Zap, History, Layout, Command, LogOut, ChevronRight, Copy, Check, Play, RefreshCw, Cpu, Box, Eye, Activity, FileText, AlertTriangle, Trash2 } from 'lucide-react';
-import KineticSim from './components/KineticSim';
+import oregaSim from './components/oregaSim';
 
-type KineticLog = {
+type oregaLog = {
     id: string;
     agent_id: string;
     command_sequence: string;
@@ -48,9 +48,9 @@ const AGENT_CAPABILITIES: any = {
 };
 
 export default function App() {
-    const [apiKey, setApiKey] = useState<string | null>(localStorage.getItem('kinetic_key'));
+    const [apiKey, setApiKey] = useState<string | null>(localStorage.getItem('orega_key'));
     const [credits, setCredits] = useState<number | null>(null);
-    const [history, setHistory] = useState<KineticLog[]>([]);
+    const [history, setHistory] = useState<oregaLog[]>([]);
     const [igniting, setIgniting] = useState(false);
     const [tempKey, setTempKey] = useState<string | null>(null);
     const [timer, setTimer] = useState(0);
@@ -72,7 +72,7 @@ export default function App() {
     const [ideContent, setIdeContent] = useState('[\n  { "type": "K-GRIP", "params": { "weight": 20, "height": 1.2 } }\n]');
 
     // Admin State
-    const [isAdminMode, setIsAdminMode] = useState(localStorage.getItem('kinetic_admin') === 'true');
+    const [isAdminMode, setIsAdminMode] = useState(localStorage.getItem('orega_admin') === 'true');
     const [adminPassword, setAdminPassword] = useState('');
     const [adminStats, setAdminStats] = useState<any>(null);
     const [adminUsers, setAdminUsers] = useState<any[]>([]);
@@ -109,10 +109,10 @@ export default function App() {
             setCredits(creData.credits);
             setHistory(hisData.logs || []);
             setApiKey(key);
-            localStorage.setItem('kinetic_key', key);
+            localStorage.setItem('orega_key', key);
         } catch (e) {
             console.error(e);
-            localStorage.removeItem('kinetic_key');
+            localStorage.removeItem('orega_key');
             setApiKey(null);
             if (!isAdminMode) logout();
         }
@@ -126,7 +126,7 @@ export default function App() {
         const data = await res.json();
         if (data.status === 'AUTHORIZED') {
             setIsAdminMode(true);
-            localStorage.setItem('kinetic_admin', 'true');
+            localStorage.setItem('orega_admin', 'true');
             setAuditPage(1); // Reset page on login
             fetchAdminData(1, auditFilters);
         } else {
@@ -189,7 +189,7 @@ export default function App() {
 
     const exitAdmin = () => {
         setIsAdminMode(false);
-        localStorage.removeItem('kinetic_admin');
+        localStorage.removeItem('orega_admin');
         setAdminPassword('');
         setAuditFilters({ after: '', before: '', type: '' });
         setAuditPage(1);
@@ -222,7 +222,7 @@ export default function App() {
     }, [apiKey]);
 
     const logout = (clearAdmin = true) => {
-        localStorage.removeItem('kinetic_key');
+        localStorage.removeItem('orega_key');
         setApiKey(null);
         setCredits(null);
         setHistory([]);
@@ -734,8 +734,8 @@ export default function App() {
                         </div>
 
                         <div className="panel" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.3)' }}>
-                            <div className="panel-label">KINETIC-SIM</div>
-                            <KineticSim active={simActive} agentId={agentId} commands={activeCmd} />
+                            <div className="panel-label">orega-SIM</div>
+                            <oregaSim active={simActive} agentId={agentId} commands={activeCmd} />
                             <div className="panel-label" style={{ marginTop: 16 }}>TELEMETRY STREAM</div>
                             <div style={{ flex: 1, overflowY: 'auto', paddingRight: 10 }}>
                                 {history.length === 0 ? (
@@ -923,12 +923,12 @@ export default function App() {
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 40, lineHeight: 1.8, fontSize: '0.95rem', color: '#bbb' }}>
                             <p>
-                                In an era of ephemeral data and shifting simulations, <strong style={{ color: 'white' }}>Kinetic</strong> stands as a testament to the sovereign bond between the digital pulse and the physical breath. We do not just transmit commands; we broadcast intent into the material world.
+                                In an era of ephemeral data and shifting simulations, <strong style={{ color: 'white' }}>orega</strong> stands as a testament to the sovereign bond between the digital pulse and the physical breath. We do not just transmit commands; we broadcast intent into the material world.
                             </p>
 
                             <div className="panel" style={{ background: 'rgba(255,140,0,0.05)', borderStyle: 'dashed' }}>
                                 <p style={{ fontStyle: 'italic' }}>
-                                    "Kinetic is the bridge. It is the realization that every line of K-Spec is a physical event in waiting—a movement of atoms, a surge of power, a tangible result in the sanctuary of physical existence."
+                                    "orega is the bridge. It is the realization that every line of K-Spec is a physical event in waiting—a movement of atoms, a surge of power, a tangible result in the sanctuary of physical existence."
                                 </p>
                             </div>
 

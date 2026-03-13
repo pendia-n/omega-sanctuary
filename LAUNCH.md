@@ -1,8 +1,8 @@
-# Kinetic RaaS: Production Launch Guide
+# orega RaaS: Production Launch Guide
 
-This guide covers how to deploy the Kinetic Headless RaaS platform to a production environment where real users can access it.
+This guide covers how to deploy the orega Headless RaaS platform to a production environment where real users can access it.
 
-Because kinetic uses **SQLite** (`better-sqlite3`), the backend requires access to a persistent disk. "Serverless" platforms like Vercel Functions or AWS Lambda are not suitable for the backend. 
+Because orega uses **SQLite** (`better-sqlite3`), the backend requires access to a persistent disk. "Serverless" platforms like Vercel Functions or AWS Lambda are not suitable for the backend. 
 
 Here is the recommended production architecture:
 1. **Frontend (UI)**: Vercel, Netlify, or Cloudflare Pages (Free, fast, edge-cached).
@@ -19,29 +19,29 @@ Railway provides persistent volumes that work perfectly with SQLite.
 
 1. Create an account on [Railway.app](https://railway.app/).
 2. Click **New Project** -> **Deploy from GitHub repo**.
-3. Select your `kinetic` repository.
+3. Select your `orega` repository.
 4. Go to the service settings in Railway:
    - **Root Directory**: Leave as `/` (default).
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm start`
 5. **Add Persistent Storage**:
    - Go to the **Volumes** tab.
-   - Add a volume mounted at `/app/kinetic.db`. (This prevents your database from wiping when Railway redeploys).
+   - Add a volume mounted at `/app/orega.db`. (This prevents your database from wiping when Railway redeploys).
 6. **Expose your server**:
-   - Go to **Settings** -> **Networking** -> **Generate Domain**. (You will get something like `kinetic-production.up.railway.app`).
+   - Go to **Settings** -> **Networking** -> **Generate Domain**. (You will get something like `orega-production.up.railway.app`).
 
 ### Step 2: Deploy the Frontend to Vercel
 Vercel is the easiest way to host your Vite/React UI.
 
 1. Go to [Vercel.com](https://vercel.com/) and click **Add New Project**.
-2. Select your `kinetic` repository.
+2. Select your `orega` repository.
 3. In the Vercel configuration:
    - **Framework Preset**: Vite
    - **Root Directory**: `ui` (Important! Tell Vercel to only build the UI folder)
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
 4. **Environment Variables**:
-   - Add `VITE_API_URL` and set it to your Railway Backend URL (e.g., `https://kinetic-production.up.railway.app`).
+   - Add `VITE_API_URL` and set it to your Railway Backend URL (e.g., `https://orega-production.up.railway.app`).
    *(Note: You will need to make sure the frontend UI code references this env variable for its API calls instead of hardcoded localhost)*
 5. Click **Deploy**. Vercel gives you a live public URL!
 
@@ -67,8 +67,8 @@ If you want total control, run both on a single Linux server instance.
    ```
 4. **Clone the repo**:
    ```bash
-   git clone https://github.com/your-username/kinetic.git
-   cd kinetic
+   git clone https://github.com/your-username/orega.git
+   cd orega
    ```
 5. **Install & Build Backend**:
    ```bash
@@ -78,7 +78,7 @@ If you want total control, run both on a single Linux server instance.
 6. **Run Backend with PM2 (Process Manager)**:
    ```bash
    npm install -g pm2
-   pm2 start dist/index.js --name "kinetic-kernel"
+   pm2 start dist/index.js --name "orega-kernel"
    pm2 save
    pm2 startup
    ```

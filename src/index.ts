@@ -119,7 +119,7 @@ class PhysicsCompiler {
             power_draw: (Math.random() * 500 + 100).toFixed(0) + " W",
             latency: (Math.random() * 50 + 10).toFixed(0) + " ms",
             structural_stability: "99.98%",
-            kinetic_potential: (Math.random() * 1000 + 500).toFixed(0) + " J"
+            orega_potential: (Math.random() * 1000 + 500).toFixed(0) + " J"
         };
     }
 }

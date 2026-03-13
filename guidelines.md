@@ -1,4 +1,4 @@
-# GUIDELINES: Kinetic Design System
+# GUIDELINES: orega Design System
 
 ## 1. Visual Identity ("The Terminal")
 The UI must feel like a specialized developer tool, not a marketing site. 
