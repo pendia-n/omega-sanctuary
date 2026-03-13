@@ -15,7 +15,7 @@ if [ -z "$API_KEY" ]; then
 fi
 
 echo "--- TRANSMITTING PHYSICAL INTENT ---"
-curl -X POST http://localhost:4400/api/execute \
+curl -X POST https://orega.run/api/execute \
      -H "X-KSpec-API-Key: $API_KEY" \
      -H "Content-Type: application/json" \
      -d "{

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, Shield, Zap, History, Layout, Command, LogOut, ChevronRight, Copy, Check, Play, RefreshCw, Cpu, Box, Eye, Activity, FileText, AlertTriangle, Trash2 } from 'lucide-react';
-import oregaSim from './components/oregaSim';
+import OregaSim from './components/OregaSim';
 
 type oregaLog = {
     id: string;
@@ -735,7 +735,7 @@ export default function App() {
 
                         <div className="panel" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.3)' }}>
                             <div className="panel-label">orega-SIM</div>
-                            <oregaSim active={simActive} agentId={agentId} commands={activeCmd} />
+                            <OregaSim active={simActive} agentId={agentId} commands={activeCmd} />
                             <div className="panel-label" style={{ marginTop: 16 }}>TELEMETRY STREAM</div>
                             <div style={{ flex: 1, overflowY: 'auto', paddingRight: 10 }}>
                                 {history.length === 0 ? (
