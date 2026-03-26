@@ -10,19 +10,19 @@
         "mcp": "tsx mcp/server.ts"
     },
     "dependencies": {
-        "@hono/node-server": "^1.19.9",
-        "@modelcontextprotocol/sdk": "^1.27.1",
-        "better-sqlite3": "^11.8.1",
-        "hono": "^4.7.2",
-        "mqtt": "^5.3.5",
-        "snarkjs": "^0.7.7",
-        "uuid": "^11.0.5",
-        "zod": "^3.24.2"
+        "@hono/node-server": "latest",
+        "@modelcontextprotocol/sdk": "latest",
+        "better-sqlite3": "latest",
+        "hono": "latest",
+        "mqtt": "latest",
+        "snarkjs": "latest",
+        "uuid": "latest",
+        "zod": "latest"
     },
     "devDependencies": {
-        "@types/better-sqlite3": "^7.6.2",
-        "@types/node": "^22.13.4",
-        "tsx": "^4.19.2",
-        "typescript": "^5.7.3"
+        "@types/better-sqlite3": "latest",
+        "@types/node": "latest",
+        "tsx": "latest",
+        "typescript": "latest"
     }
 }
