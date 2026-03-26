@@ -25,6 +25,18 @@ db.exec(`
     FOREIGN KEY(api_key_id) REFERENCES api_keys(id)
   );
 
+  CREATE TABLE IF NOT EXISTS executions (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    user_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    cost REAL DEFAULT 32,
+    status TEXT DEFAULT 'pending',
+    robot_id TEXT,
+    response TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES api_keys(id)
+  );
+
   CREATE TABLE IF NOT EXISTS admin_config (
     key TEXT PRIMARY KEY,
     value TEXT
@@ -34,6 +46,22 @@ db.exec(`
 // MIGRATIONS
 try {
   db.exec("ALTER TABLE api_keys ADD COLUMN refill_count INTEGER DEFAULT 0;");
+} catch (e) { }
+
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS executions (
+      id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+      user_id TEXT NOT NULL,
+      action TEXT NOT NULL,
+      cost REAL DEFAULT 32,
+      status TEXT DEFAULT 'pending',
+      robot_id TEXT,
+      response TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES api_keys(id)
+    );
+  `);
 } catch (e) { }
 
 export default db;

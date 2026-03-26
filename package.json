@@ -14,7 +14,8 @@
         "@modelcontextprotocol/sdk": "^1.27.1",
         "better-sqlite3": "^11.8.1",
         "hono": "^4.7.2",
-        "stripe": "^20.4.1",
+        "mqtt": "^5.3.5",
+        "snarkjs": "^0.7.7",
         "uuid": "^11.0.5",
         "zod": "^3.24.2"
     },
